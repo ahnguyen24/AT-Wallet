@@ -1,4 +1,4 @@
-# SEC-Wallet Demo
+# AT-Wallet
 
 This repo contains a FastAPI backend and a Create React App frontend. Instructions below show how to run both locally (backend on port 8000, frontend on port 3000).
 
@@ -14,7 +14,7 @@ python -m venv .venv
 
 - Install dependencies:
 ```
-pip install -r backend/requirements_src.txt
+/AT-Wallet/src/.venv/Scripts/python.exe -m pip install -r requirements.txt
 ```
 
 - Run the backend with uvicorn from the workspace root (so package `backend` is importable):
@@ -37,7 +37,7 @@ npm install
 npm start
 ```
 
-- The frontend dev server runs on `http://localhost:3000` by default and will call the backend API at `http://127.0.0.1:8000/api`.
+- The frontend dev server runs on `http://localhost:3001` by default and will call the backend API at `http://127.0.0.1:8000/api`.
 
 ## Fixes applied
 
@@ -48,5 +48,4 @@ npm start
 
 - If the frontend can't reach the backend, ensure the backend is running on port 8000 and check CORS.
 - If `npm start` fails due to package version mismatches, consider using Node 16 or 18 and updating `react` version if necessary.
-
-If you want, I can also run the backend tests or start the servers for you locally (I can provide the exact commands). 
+- For Python issues, ensure the correct virtual environment is activated and dependencies are installed.

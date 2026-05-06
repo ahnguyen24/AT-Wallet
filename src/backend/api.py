@@ -12,6 +12,26 @@ from .solana_client import get_balance #[cite: 9]
 
 router = APIRouter()
 
+
+@router.get("/")
+def api_root():
+    endpoints = []
+    for r in router.routes:
+        path = getattr(r, "path", None)
+        methods = getattr(r, "methods", None)
+        if not path or not methods:
+            continue
+        method_list = [m for m in sorted(methods) if m not in ("HEAD", "OPTIONS")]
+        if not method_list:
+            continue
+        endpoints.append({
+            "path": f"/api{path}",
+            "methods": method_list,
+            "name": getattr(r, "name", None),
+        })
+
+    return {"message": "AT-Wallet Backend API", "endpoints": endpoints}
+
 class RegisterIn(BaseModel):
     username: str
     password: str
