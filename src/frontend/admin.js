@@ -217,6 +217,8 @@ function setAdminLoggedIn(user) {
 function adminLogout() {
   adminToken = null;
   localStorage.removeItem('admin_token');
+  if(el('admin-user')) el('admin-user').value = "";
+  if(el('admin-pass')) el('admin-pass').value = "";
   location.reload();
 }
 
