@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AT-Wallet Admin Console</title>
+    <style>
+      body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 20px; background: #f6f8fb; color: #1e293b; }
+      h1 { font-size: 24px; margin-bottom: 20px; color: #0f172a; }
+      h2 { font-size: 18px; margin-top: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+      
+      section { background: #fff; padding: 20px; border-radius: 12px; shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+      
+      table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+      th, td { padding: 12px; border: 1px solid #e6e9ef; text-align: left; font-size: 14px; }
+      th { background: #f8fafc; font-weight: 600; }
+      
+      .row { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
+      
+      button { padding: 8px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+      button:hover { background: #f1f5f9; }
+      .primary { background: #2563eb; color: #fff; border-color: #1e40af; }
+      .primary:hover { background: #1d4ed8; }
+      .danger { background: #ef4444; color: #fff; border-color: #b91c1c; }
+      .danger:hover { background: #dc2626; }
+      
+      input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
+      input:focus { border-color: #2563eb; ring: 2px #bfdbfe; }
+      
+      .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+      .small { font-size: 13px; color: #64748b; margin-top: 5px; }
+      #msg { font-weight: 600; color: #2563eb; margin-bottom: 10px; min-height: 20px; }
+    </style>
+  </head>
+  <body>
+    <h1>AT-Wallet — Admin Console</h1>
+    <div id="msg"></div>
+
+    <section id="admin-login-box">
+      <h2>Admin Login</h2>
+      <div class="row">
+        <input type="text" id="admin-user" placeholder="Username">
+        <input type="password" id="admin-pass" placeholder="Password">
+        <button id="admin-login" class="primary">Login</button>
+      </div>
+      <div id="admin-login-msg" class="small" style="color: #ef4444;"></div>
+    </section>
+
+    <section id="admin-section" style="display:none">
+      <div class="row">
+        <div>
+          <button id="btn-all">All Transactions</button>
+          <button id="btn-pending">Pending</button>
+          <button id="btn-requires">Requires Approval</button>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:8px;">
+          <button id="refresh-wallets">Refresh Data</button>
+          <button id="admin-logout" class="danger">Logout</button>
+        </div>
+      </div>
+
+      <h2>Recent Transactions</h2>
+      <table id="tx-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Sender</th>
+            <th>Receiver</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="complaint-section" style="display:none">
+      <h2>Complaints (Security Logs)</h2>
+      <table id="complaint-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="wallet-section" style="display:none">
+      <h2>User Wallets & Trust Scores</h2>
+      <table id="wallet-table">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Username</th>
+            <th>Trust Score</th>
+            <th>Wallet Address</th>
+            <th>Balance (SOL)</th>
+            <th>Management</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <script src="admin.js"></script>
+  </body>
+</html>

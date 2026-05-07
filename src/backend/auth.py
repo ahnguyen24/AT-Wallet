@@ -32,5 +32,12 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     db = SessionLocal()
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
+        db.close()
         raise HTTPException(status_code=401, detail="user not found")
+    # detach user from session so callers can safely use attributes and we can close the session
+    try:
+        db.expunge(user)
+    except Exception:
+        pass
+    db.close()
     return user

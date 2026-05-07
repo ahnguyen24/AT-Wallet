@@ -3,13 +3,23 @@ from sqlalchemy.orm import relationship
 from .db import Base
 import datetime
 
-
+# add trust_score column to users table for better trust level management
+class TrustScoreHistory(Base):
+    __tablename__ = "trust_score_history"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    score_before = Column(Float)
+    score_after = Column(Float)
+    reason = Column(String) # Ví dụ: "Giao dịch thành công", "Giao dịch lỗi"
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False)
+    trust_score = Column(Float, default=8.0)
 
 
 class Keystore(Base):

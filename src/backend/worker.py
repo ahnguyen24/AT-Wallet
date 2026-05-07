@@ -1,27 +1,27 @@
-"""Programmatic RQ worker entrypoint."""
+# src/backend/worker.py
+
 from redis import Redis
-from rq import Worker, Queue, push_connection, pop_connection
+from rq import Worker, Queue
 from .config import REDIS_URL
+import sys
 
-# Cấu hình danh sách các hàng đợi cần lắng nghe
 listen = ["default"]
-
-# Khởi tạo kết nối tới Redis Server dựa trên config
 redis_conn = Redis.from_url(REDIS_URL)
 
 def run_worker():
-    # Đẩy kết nối vào ngăn xếp kết nối của RQ
-    push_connection(redis_conn)
-    try:
-        # Khởi tạo worker và danh sách hàng đợi
-        queues = [Queue(name, connection=redis_conn) for name in listen]
-        worker = Worker(queues)
-        
-        print(f"[*] Worker đang khởi chạy và lắng nghe trên: {listen}")
-        worker.work()
-    finally:
-        # Đảm bảo đóng kết nối khi worker dừng[cite: 11]
-        pop_connection()
+    # Trên Windows, chúng ta phải sử dụng SimpleWorker vì không có os.fork()
+    queues = [Queue(name, connection=redis_conn) for name in listen]
+    
+    # Kiểm tra nếu là Windows thì dùng SimpleWorker
+    if sys.platform == "win32":
+        from rq.worker import SimpleWorker
+        worker = SimpleWorker(queues, connection=redis_conn)
+        print("[*] Đang chạy SimpleWorker trên Windows (No fork mode)...")
+    else:
+        worker = Worker(queues, connection=redis_conn)
+        print(f"[*] Worker đang chạy trên {sys.platform}...")
+
+    worker.work()
 
 if __name__ == "__main__":
     run_worker()
