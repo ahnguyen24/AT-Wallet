@@ -67,7 +67,6 @@ function renderTx(rows) {
       <td>${senderDisplay}</td>
       <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">${t.receiver}</td>
       <td>${t.amount} SOL</td>
-      <td><span class="status-badge">${t.status}</span></td>
       <td class="actions-cell"></td>
     `;
 
@@ -246,8 +245,13 @@ if (savedToken) {
 }
 
 // Wire events
-el('btn-all').onclick = () => fetchTx();
-el('btn-pending').onclick = () => fetchTx('pending');
-el('btn-requires').onclick = () => fetchTx('requires_approval');
-el('refresh-wallets').onclick = () => fetchWallets();
-el('admin-logout').onclick = adminLogout;
+if (el('btn-all')) el('btn-all').onclick = () => fetchTx();
+if (el('btn-pending')) el('btn-pending').onclick = () => fetchTx('pending');
+if (el('btn-requires')) el('btn-requires').onclick = () => fetchTx('requires_approval');
+if (el('refresh-wallets')) el('refresh-wallets').onclick = () => { 
+    fetchTx(); 
+    fetchWallets(); 
+    fetchComplaints(); 
+    showToast('Dữ liệu đã được làm mới thành công!'); 
+};
+if (el('admin-logout')) el('admin-logout').onclick = adminLogout;

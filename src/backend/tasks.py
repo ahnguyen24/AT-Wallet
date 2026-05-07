@@ -17,12 +17,20 @@ def process_pending_tx(tx_id: int):
         return
 
     try:
-        # Tìm ví người nhận
+        # Tìm ví người nhận (Hỗ trợ cả địa chỉ ví hoặc username)
         r_w = db.query(Wallet).filter(Wallet.address == tx.receiver).first()
+        if not r_w:
+            # Nếu không tìm thấy theo địa chỉ, thử tìm theo username
+            r_user = db.query(User).filter(User.username == tx.receiver).first()
+            if r_user:
+                r_w = db.query(Wallet).filter(Wallet.user_id == r_user.id).first()
+
         if r_w:
             # Cộng tiền cho người nhận trong DB
             r_w.balance = (r_w.balance or 0.0) + tx.amount
             print(f"[tasks] credited {tx.amount} to receiver {tx.receiver}")
+        else:
+            print(f"[tasks] receiver {tx.receiver} is an external address, skipping DB credit")
         
         # Đánh dấu thành công
         tx.status = "success"

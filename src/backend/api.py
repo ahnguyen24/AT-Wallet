@@ -103,7 +103,19 @@ def register(payload: RegisterIn):
 def transfer(payload: TransferIn, current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     try:
-        # 1. Tìm người nhận và kiểm tra điểm số
+        # 1. XÁC THỰC MẬT KHẨU GIAO DỊCH (Bổ sung lớp bảo mật quan trọng)
+        ph = PasswordHasher()
+        try:
+            ph.verify(current_user.password_hash, payload.password)
+        except Exception:
+            raise HTTPException(status_code=401, detail="Mật khẩu giao dịch không chính xác")
+
+        # 2. KIỂM TRA SỐ DƯ (Di chuyển lên đầu để chặn ngay lập tức)
+        sender_wallet = db.query(Wallet).filter(Wallet.user_id == current_user.id).first()
+        if not sender_wallet or sender_wallet.balance < payload.amount:
+            raise HTTPException(status_code=400, detail="Số dư không đủ để thực hiện giao dịch")
+
+        # 3. Tìm người nhận và kiểm tra điểm số
         receiver_user = db.query(User).filter(User.username == payload.recipient).first()
         # Nếu không tìm thấy qua username, thử tìm qua địa chỉ ví
         if not receiver_user:
@@ -119,7 +131,7 @@ def transfer(payload: TransferIn, current_user: User = Depends(get_current_user)
             db.commit()
             raise HTTPException(status_code=400, detail="Giao dịch bị chặn: Người nhận thuộc danh sách nguy hiểm.")
 
-        # 2. Phân loại trạng thái giao dịch dựa trên Trust Score
+        # 4. Phân loại trạng thái giao dịch dựa trên Trust Score
         s_score = current_user.trust_score
         r_score = receiver_user.trust_score if receiver_user else 8.0 # Mặc định 8.0 nếu gửi ví ngoài hệ thống
         
@@ -134,14 +146,10 @@ def transfer(payload: TransferIn, current_user: User = Depends(get_current_user)
         elif s_score > 7.5 and r_score > 7.5:
             status = "pending"
 
-        # 3. Kiểm tra và trừ tiền người gửi ngay lập tức
-        sender_wallet = db.query(Wallet).filter(Wallet.user_id == current_user.id).first()
-        if not sender_wallet or sender_wallet.balance < payload.amount:
-            raise HTTPException(status_code=400, detail="Số dư không đủ")
-        
+        # 5. Khấu trừ tiền ngay lập tức sau khi các kiểm tra an toàn đã pass
         sender_wallet.balance -= payload.amount
 
-        # 4. Tạo giao dịch
+        # 6. Tạo giao dịch
         new_tx = Transaction(
             sender_id=current_user.id,
             receiver=payload.recipient,
@@ -158,6 +166,7 @@ def transfer(payload: TransferIn, current_user: User = Depends(get_current_user)
         return {"status": status, "tx_id": new_tx.id}
     finally:
         db.close()
+
 @router.get("/user/trust-history")
 def get_trust_history(current_user: User = Depends(get_current_user)):
     db = SessionLocal()

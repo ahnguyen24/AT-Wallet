@@ -44,13 +44,16 @@ def require_admin(
         return True
 
     if bearer_creds and bearer_creds.scheme.lower() == 'bearer':
+        db = SessionLocal()
         try:
             data = decode_token(bearer_creds.credentials)
-            user_id = data.get("sub")
-            db = SessionLocal()
-            user = db.query(User).filter(User.id == user_id).first()
-            if user and user.is_admin:
-                return True
+            if data:
+                user_id = data.get("sub")
+                user = db.query(User).filter(User.id == user_id).first()
+                if user and user.is_admin:
+                    return True
+        except Exception as e:
+            print(f"Admin auth error: {e}")
         finally:
             db.close()
             
@@ -69,15 +72,20 @@ def list_transactions(status: Optional[str] = None, _=Depends(require_admin)):
         rows = query.order_by(Transaction.id.desc()).all()
         out = []
         for t in rows:
-            # Lấy username của người gửi để hiển thị cho admin
-            sender = db.query(User).filter(User.id == t.sender_id).first()
+            # Lấy username của người gửi an toàn
+            sender_name = "Unknown"
+            if t.sender_id:
+                sender = db.query(User).filter(User.id == t.sender_id).first()
+                if sender:
+                    sender_name = sender.username
+                    
             out.append({
                 "id": t.id,
                 "sender_id": t.sender_id,
-                "sender_username": sender.username if sender else "Unknown",
+                "sender_username": sender_name,
                 "receiver": t.receiver,
                 "amount": t.amount,
-                "status": t.status,
+                "status": t.status, # ĐÃ THÊM LẠI TRƯỜNG NÀY
                 "created_at": t.created_at.isoformat() if t.created_at else None
             })
         return out
@@ -123,10 +131,11 @@ def list_wallets(_=Depends(require_admin)):
         out = []
         for u in users:
             w = db.query(Wallet).filter(Wallet.user_id == u.id).first()
+            ts = u.trust_score if u.trust_score is not None else 0.0
             out.append({
                 "user_id": u.id,
                 "username": u.username,
-                "trust_score": round(u.trust_score, 2) if u.trust_score else 0.0,
+                "trust_score": round(ts, 2),
                 "wallet_address": w.address if w else "N/A",
                 "balance": w.balance if w else 0.0,
             })
