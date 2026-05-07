@@ -233,6 +233,10 @@ function startBalancePolling() {
 
 // --- CHUYỂN TAB ---
 function switchToHome() {
+    // Xóa trắng các ô nhập liệu khi về Home
+    if(document.getElementById('recipient')) document.getElementById('recipient').value = "";
+    if(document.getElementById('amount')) document.getElementById('amount').value = "";
+    if(document.getElementById('tx-password')) document.getElementById('tx-password').value = "";
     document.getElementById('home-screen')?.classList.remove('hidden');
     document.getElementById('trans-screen')?.classList.add('hidden');
     document.getElementById('tab-home')?.classList.add('bg-indigo-600', 'text-white');
@@ -240,6 +244,10 @@ function switchToHome() {
 }
 
 function switchToTrans() {
+    // Xóa trắng các ô nhập liệu khi vào trang Chuyển tiền
+    if(document.getElementById('recipient')) document.getElementById('recipient').value = "";
+    if(document.getElementById('amount')) document.getElementById('amount').value = "";
+    if(document.getElementById('tx-password')) document.getElementById('tx-password').value = "";
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('trans-screen')?.classList.remove('hidden');
     document.getElementById('tab-trans')?.classList.add('bg-indigo-600', 'text-white');
