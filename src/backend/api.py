@@ -79,7 +79,8 @@ def register(payload: RegisterIn):
             raise HTTPException(status_code=400, detail="user exists")
         ph = PasswordHasher()
         pw_hash = ph.hash(payload.password)
-        user = User(username=payload.username, password_hash=pw_hash, trust_score=8.0)
+        # Sửa thành 6.0 để rơi vào luồng 'requires_approval' khi test
+        user = User(username=payload.username, password_hash=pw_hash, trust_score=6.0)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -133,7 +134,14 @@ def transfer(payload: TransferIn, current_user: User = Depends(get_current_user)
         elif s_score > 7.5 and r_score > 7.5:
             status = "pending"
 
-        # 3. Tạo giao dịch
+        # 3. Kiểm tra và trừ tiền người gửi ngay lập tức
+        sender_wallet = db.query(Wallet).filter(Wallet.user_id == current_user.id).first()
+        if not sender_wallet or sender_wallet.balance < payload.amount:
+            raise HTTPException(status_code=400, detail="Số dư không đủ")
+        
+        sender_wallet.balance -= payload.amount
+
+        # 4. Tạo giao dịch
         new_tx = Transaction(
             sender_id=current_user.id,
             receiver=payload.recipient,

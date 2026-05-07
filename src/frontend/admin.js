@@ -3,7 +3,33 @@ const BASE = '/admin';
 let adminToken = null; // Bearer token
 
 function el(id) { return document.getElementById(id); }
-function setMsg(txt) { el('msg').innerText = txt; }
+
+let adminToastTimeout = null;
+function showToast(message, type = 'success') {
+  let toast = el('admin-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'admin-toast';
+    toast.style = 'fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: #fff; font-weight: bold; z-index: 9999; transition: all 0.3s;';
+    document.body.appendChild(toast);
+  }
+  
+  if (adminToastTimeout) clearTimeout(adminToastTimeout);
+  
+  toast.innerText = message;
+  toast.style.display = 'block';
+  toast.style.background = type === 'success' ? '#10b981' : '#ef4444';
+  toast.style.position = 'fixed';
+  
+  adminToastTimeout = setTimeout(() => { 
+    toast.style.display = 'none'; 
+    adminToastTimeout = null;
+  }, 7000); // Tăng lên 7 giây cho thong thả
+}
+
+function setMsg(message, type = 'success') {
+  showToast(message, type);
+}
 
 function authHeaders() {
   const headers = {};
@@ -46,6 +72,7 @@ function renderTx(rows) {
     `;
 
     const actions = tr.querySelector('.actions-cell');
+    // CHỈ hiện nút khi trạng thái là chờ duyệt. Khi đã sang PENDING (đang xử lý) thì ẩn nút.
     if (t.status === 'requires_approval') {
       const btnApprove = document.createElement('button');
       btnApprove.innerText = 'Approve';
@@ -81,15 +108,15 @@ async function handleAction(txId, actionName) {
 
     if (!r.ok) {
       const err = await r.json();
-      alert("Action failed: " + (err.detail[0]?.msg || JSON.stringify(err.detail)));
+      showToast("Action failed: " + (err.detail[0]?.msg || JSON.stringify(err.detail)), 'error');
       return;
     }
 
-    setMsg(`Transaction ${txId} has been ${actionName}ed.`);
+    showToast(`Transaction ${txId} has been ${actionName}ed.`, 'success');
     fetchTx(); 
     fetchWallets(); // Cập nhật lại điểm số ở bảng ví
   } catch (e) {
-    alert("Error: " + e.message);
+    showToast("Error: " + e.message, 'error');
   }
 }
 
@@ -126,7 +153,7 @@ async function fetchWallets() {
 
 async function creditWallet(userId) {
   const amount = parseFloat(el(`amt-${userId}`).value);
-  if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+  if (isNaN(amount) || amount <= 0) return showToast("Invalid amount", 'error');
   try {
     const r = await fetch(`${BASE}/wallets/${userId}/credit`, {
       method: 'POST',
@@ -134,24 +161,23 @@ async function creditWallet(userId) {
       body: JSON.stringify({ amount })
     });
     if (r.ok) {
-      setMsg(`Credited ${amount} to user ${userId}`);
+      showToast(`Credited ${amount} to user ${userId}`, 'success');
       fetchWallets();
     }
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast(e.message, 'error'); }
 }
 
 async function unblockUser(userId) {
-  if (!confirm("Unblock this user and set Trust Score to 6.0?")) return;
   try {
     const r = await fetch(`${BASE}/users/${userId}/unblock`, {
       method: 'POST',
       headers: authHeaders()
     });
     if (r.ok) {
-      setMsg(`User ${userId} unblocked.`);
+      showToast(`User ${userId} unblocked successfully!`, 'success');
       fetchWallets();
     }
-  } catch (e) { alert(e.message); }
+  } catch (e) { showToast(e.message, 'error'); }
 }
 
 async function fetchComplaints() {

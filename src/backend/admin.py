@@ -98,7 +98,7 @@ def approve_tx(tx_id: int, data: AdminAction, _=Depends(require_admin)):
         if data.action == "approve":
             # Chuyển trạng thái về pending để worker xử lý on-chain
             tx.status = "pending"
-            q.enqueue("src.backend.tasks.process_pending_tx", tx.id)
+            q.enqueue("backend.tasks.process_pending_tx", tx.id)
         else:
             # RULE: Admin Reject -> Trừ 0.75 điểm
             tx.status = "blocked_by_admin"

@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "/api";
 let currentUser = null;
 let balancePollId = null;
 let trustChart = null;
@@ -266,7 +266,11 @@ async function handleTransfer() {
 
         const data = await res.json();
         if (res.ok) {
-            showToast("Giao dịch đang được xử lý...");
+            if (data.status === "requires_approval") {
+                showToast("Giao dịch đang chờ Admin phê duyệt (do rủi ro thấp)", "success");
+            } else {
+                showToast("Giao dịch đã được gửi lên hệ thống xử lý...");
+            }
             document.getElementById('tx-password').value = "";
             switchToHome();
         } else {
