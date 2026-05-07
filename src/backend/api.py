@@ -79,8 +79,8 @@ def register(payload: RegisterIn):
             raise HTTPException(status_code=400, detail="user exists")
         ph = PasswordHasher()
         pw_hash = ph.hash(payload.password)
-        # Sửa thành 6.0 để rơi vào luồng 'requires_approval' khi test
-        user = User(username=payload.username, password_hash=pw_hash, trust_score=6.0)
+        # Mặc định là 8.0 (Normal) khi mới tạo tài khoản
+        user = User(username=payload.username, password_hash=pw_hash, trust_score=8.0)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -152,7 +152,7 @@ def transfer(payload: TransferIn, current_user: User = Depends(get_current_user)
         # 6. Tạo giao dịch
         new_tx = Transaction(
             sender_id=current_user.id,
-            receiver=payload.recipient,
+            receiver=payload.recipient or payload.receiver,
             amount=payload.amount,
             status=status
         )
