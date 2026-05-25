@@ -34,7 +34,7 @@ async function updateTrustChart() {
         const chartEl = document.getElementById('trustChart');
         if (!chartEl) return;
         const ctx = chartEl.getContext('2d');
-        
+
         if (trustChart) {
             trustChart.data.labels = labels;
             trustChart.data.datasets[0].data = data;
@@ -48,8 +48,8 @@ async function updateTrustChart() {
                     datasets: [{
                         label: 'Trust Score',
                         data: data,
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
@@ -76,9 +76,9 @@ async function updateTrustChart() {
 async function handleAuth(type) {
     const usernameEl = document.getElementById('username');
     const passwordEl = document.getElementById('password');
-    
+
     if (!usernameEl || !passwordEl) return;
-    
+
     const username = usernameEl.value;
     const password = passwordEl.value;
 
@@ -86,7 +86,7 @@ async function handleAuth(type) {
 
     const endpoint = type === 'login' ? '/login' : '/register';
     console.log(`Đang thực hiện ${type}...`);
-    
+
     try {
         const res = await fetch(`${BASE_URL}${endpoint}`, {
             method: "POST",
@@ -116,7 +116,7 @@ async function handleAuth(type) {
                     const msg = prompt('Mô tả vấn đề (ví dụ: Tôi bị khóa sai lý do):');
                     if (msg) {
                         try {
-                            const r = await fetch(`${BASE_URL}/complaint/anon`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ username, message: msg }) });
+                            const r = await fetch(`${BASE_URL}/complaint/anon`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, message: msg }) });
                             if (r.ok) showToast('Khiếu nại đã gửi'); else showToast('Gửi khiếu nại thất bại', 'error');
                         } catch (e) { showToast('Lỗi gửi khiếu nại', 'error') }
                     }
@@ -134,13 +134,16 @@ async function handleAuth(type) {
 // --- GIAO DIỆN SAU ĐĂNG NHẬP (QUAN TRỌNG) ---
 function postLoginSetup() {
     console.log("Đang khởi tạo giao diện chính...");
-    
+
     const authCard = document.getElementById('auth-card');
     const mainApp = document.getElementById('main-app');
-    
+
     if (authCard && mainApp) {
         authCard.classList.add('hidden');
+        authCard.classList.remove('flex');
+        document.getElementById('landing-page')?.classList.add('hidden');
         mainApp.classList.remove('hidden');
+        mainApp.classList.add('flex');
     } else {
         console.error("Không tìm thấy ID auth-card hoặc main-app trong HTML!");
     }
@@ -148,64 +151,64 @@ function postLoginSetup() {
     // Điền thông tin User
     const nameDisplay = document.getElementById('user-name-display');
     const initialDisplay = document.getElementById('user-initial');
-    
+
     if (nameDisplay) nameDisplay.innerText = currentUser.username;
     if (initialDisplay) initialDisplay.innerText = currentUser.username[0].toUpperCase();
-    
+
     // Reset polling và biểu đồ
     updateTrustChart();
     startBalancePolling();
     // if user is blocked, show complaint button
-    (async ()=>{
-        try{
+    (async () => {
+        try {
             const r = await fetch(`${BASE_URL}/wallet/info`, { headers: { Authorization: `Bearer ${currentUser.token}` } });
-            if(!r.ok) return;
+            if (!r.ok) return;
             const info = await r.json();
-            if(info.trust_score !== undefined && info.trust_score <= 5.0){
+            if (info.trust_score !== undefined && info.trust_score <= 5.0) {
                 // create complaint button if not exists
-                if(!document.getElementById('complaint-btn')){
+                if (!document.getElementById('complaint-btn')) {
                     const container = document.getElementById('home-screen');
-                    if(container){
+                    if (container) {
                         const btn = document.createElement('button');
                         btn.id = 'complaint-btn';
                         btn.textContent = 'Gửi khiếu nại';
                         btn.className = 'w-full mt-4 py-3 bg-rose-600 text-white font-bold rounded-2xl';
-                        btn.onclick = ()=>{ showComplaintPrompt() };
+                        btn.onclick = () => { showComplaintPrompt() };
                         container.appendChild(btn);
                     }
                 }
             }
-        }catch(e){ console.warn('complaint UI check failed', e) }
+        } catch (e) { console.warn('complaint UI check failed', e) }
     })();
 }
 
-async function showComplaintPrompt(){
+async function showComplaintPrompt() {
     const msg = prompt('Mô tả vấn đề của bạn (ví dụ: Tài khoản bị khóa do sai lý do):');
-    if(!msg) return;
-    try{
-        const r = await fetch(`${BASE_URL}/complaint`, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${currentUser.token}` }, body: JSON.stringify({ message: msg }) });
-        if(r.ok){ showToast('Khiếu nại đã gửi, admin sẽ kiểm tra.'); }
-        else { const t = await r.text(); showToast('Gửi khiếu nại thất bại: '+t, 'error') }
-    }catch(e){ showToast('Không thể gửi khiếu nại', 'error') }
+    if (!msg) return;
+    try {
+        const r = await fetch(`${BASE_URL}/complaint`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${currentUser.token}` }, body: JSON.stringify({ message: msg }) });
+        if (r.ok) { showToast('Khiếu nại đã gửi, admin sẽ kiểm tra.'); }
+        else { const t = await r.text(); showToast('Gửi khiếu nại thất bại: ' + t, 'error') }
+    } catch (e) { showToast('Không thể gửi khiếu nại', 'error') }
 }
 
 function startBalancePolling() {
     console.log("Bắt đầu cập nhật số dư định kỳ...");
     if (balancePollId) clearInterval(balancePollId);
-    
+
     balancePollId = setInterval(async () => {
         if (!currentUser) return;
         try {
             // 1. Cập nhật Balance
-            const r = await fetch(`${BASE_URL}/wallet/info`, { 
-                headers: { Authorization: `Bearer ${currentUser.token}` } 
+            const r = await fetch(`${BASE_URL}/wallet/info`, {
+                headers: { Authorization: `Bearer ${currentUser.token}` }
             });
             if (r.ok) {
                 const info = await r.json();
                 const bal1 = document.getElementById('home-balance');
                 const bal2 = document.getElementById('current-balance');
                 const tsVal = document.getElementById('trust-score-value');
-                
+
                 if (bal1) bal1.innerText = (info.db_balance || 0).toFixed(4) + ' SOL';
                 if (bal2) bal2.innerText = (info.db_balance || 0).toFixed(4) + ' SOL';
                 if (tsVal) tsVal.innerText = (info.trust_score || 0).toFixed(1);
@@ -218,7 +221,7 @@ function startBalancePolling() {
             if (txR.ok) {
                 const txs = await txR.json();
                 const currentSuccessCount = txs.filter(t => t.status === 'success').length;
-                
+
                 if (lastKnownTxCount !== -1 && currentSuccessCount > lastKnownTxCount) {
                     showToast("Giao dịch On-chain thành công!", "success");
                     updateTrustChart();
@@ -234,24 +237,28 @@ function startBalancePolling() {
 // --- CHUYỂN TAB ---
 function switchToHome() {
     // Xóa trắng các ô nhập liệu khi về Home
-    if(document.getElementById('recipient')) document.getElementById('recipient').value = "";
-    if(document.getElementById('amount')) document.getElementById('amount').value = "";
-    if(document.getElementById('tx-password')) document.getElementById('tx-password').value = "";
+    if (document.getElementById('recipient')) document.getElementById('recipient').value = "";
+    if (document.getElementById('amount')) document.getElementById('amount').value = "";
+    if (document.getElementById('tx-password')) document.getElementById('tx-password').value = "";
     document.getElementById('home-screen')?.classList.remove('hidden');
     document.getElementById('trans-screen')?.classList.add('hidden');
-    document.getElementById('tab-home')?.classList.add('bg-indigo-600', 'text-white');
-    document.getElementById('tab-trans')?.classList.remove('bg-indigo-600', 'text-white');
+    document.getElementById('tab-home')?.classList.add('bg-emerald-800', 'text-white');
+    document.getElementById('tab-home')?.classList.remove('hover:bg-emerald-600', 'text-emerald-50');
+    document.getElementById('tab-trans')?.classList.remove('bg-emerald-800', 'text-white');
+    document.getElementById('tab-trans')?.classList.add('hover:bg-emerald-600', 'text-emerald-50');
 }
 
 function switchToTrans() {
     // Xóa trắng các ô nhập liệu khi vào trang Chuyển tiền
-    if(document.getElementById('recipient')) document.getElementById('recipient').value = "";
-    if(document.getElementById('amount')) document.getElementById('amount').value = "";
-    if(document.getElementById('tx-password')) document.getElementById('tx-password').value = "";
+    if (document.getElementById('recipient')) document.getElementById('recipient').value = "";
+    if (document.getElementById('amount')) document.getElementById('amount').value = "";
+    if (document.getElementById('tx-password')) document.getElementById('tx-password').value = "";
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('trans-screen')?.classList.remove('hidden');
-    document.getElementById('tab-trans')?.classList.add('bg-indigo-600', 'text-white');
-    document.getElementById('tab-home')?.classList.remove('bg-indigo-600', 'text-white');
+    document.getElementById('tab-trans')?.classList.add('bg-emerald-800', 'text-white');
+    document.getElementById('tab-trans')?.classList.remove('hover:bg-emerald-600', 'text-emerald-50');
+    document.getElementById('tab-home')?.classList.remove('bg-emerald-800', 'text-white');
+    document.getElementById('tab-home')?.classList.add('hover:bg-emerald-600', 'text-emerald-50');
 }
 
 async function handleTransfer() {
@@ -264,7 +271,7 @@ async function handleTransfer() {
     try {
         const res = await fetch(`${BASE_URL}/transfer`, {
             method: "POST",
-            headers: { 
+            headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${currentUser.token}`
             },
