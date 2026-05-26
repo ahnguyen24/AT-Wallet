@@ -1,31 +1,39 @@
 mod security;
 mod wallet;
 mod api;
+mod models;
 
-use wallet::engine::WalletEngine;
-use security::encryption::SecurityCore;
+use axum::{routing::post, Router};
+use sqlx::sqlite::SqlitePoolOptions;
+use std::sync::Arc;
+
+// Using direct path to avoid import errors
+use crate::api::handlers::{AppState, register_user, create_wallet, init_db};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🛡️ --- IOTA SECURE WALLET: PHASE 2 ---");
+    let database_url = "sqlite:wallet.db";
 
-    // 1. Generate Mnemonic
-    let mnemonic = WalletEngine::generate_mnemonic();
-    println!("✔ Mnemonic generated (Securely held in memory)");
-
-    // 2. Derive Address
-    println!("📡 Connecting to Shimmer Testnet...");
-    let address = WalletEngine::get_address_from_mnemonic(&mnemonic).await;
-    println!("✔ Public Address: {}", address);
-
-    // 3. Security Check: Encrypt the mnemonic
-    let password = "User-Master-Password-2024";
-    let salt = b"unique_salt_per_user";
-    let master_key = SecurityCore::derive_master_key(password, salt);
-    let (encrypted, _nonce) = SecurityCore::encrypt(&mnemonic, &master_key);
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(database_url)
+        .await?;
     
-    println!("✔ Encryption Engine: PBKDF2 + AES-GCM verified.");
-    println!("✔ Wallet setup complete. Address {} is ready for use.", address);
+    // Initialize DB
+    init_db(&pool).await;
+
+    let shared_state = Arc::new(AppState { db: pool });
+
+    let app = Router::new()
+        .route("/register", post(register_user))
+        .route("/wallet/create", post(create_wallet))
+        .with_state(shared_state);
+
+    let addr = "0.0.0.0:3000";
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    println!("🚀 IOTA Secure API running on http://{}", addr);
+    
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
