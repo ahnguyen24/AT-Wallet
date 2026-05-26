@@ -2,12 +2,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use chrono::{DateTime, Utc};
 
-#[derive(Debug, FromRow, Serialize, Deserialize)]
+#[derive(Debug, sqlx::FromRow, serde::Serialize, serde::Deserialize)]
 pub struct User {
     pub id: String,
     pub email: String,
-    pub master_salt: String,     // Hex encoded salt for PBKDF2
-    pub totp_secret: String,     // Base32 encoded
+    pub password_hash: String, // ADDED
+    pub master_salt: String,
+    pub totp_secret: String,
     pub failed_attempts: i32,
     pub is_locked: bool,
 }

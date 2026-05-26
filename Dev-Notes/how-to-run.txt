@@ -1,0 +1,107 @@
+===========================================================
+AT WALLET - EXECUTION & AUDIT GUIDE
+===========================================================
+
+1. PREREQUISITES & DEPENDENCIES
+-----------------------------------------------------------
+Ensure your WSL (Ubuntu) environment has the necessary compilers
+and tools installed.
+
+A. System Tools:
+   Run the following to install the Rust compiler and C++ build tools:
+   $ sudo apt update
+   $ sudo apt install -y build-essential pkg-config libssl-dev sqlite3 uuid-runtime
+
+B. Rust Environment:
+   If Rust is not installed, run:
+   $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   $ source $HOME/.cargo/env
+
+C. Python Environment (For Audit Script):
+   $ sudo apt install -y python3-venv python3-pip
+
+2. SYSTEM INSTALLATION & SETUP
+-----------------------------------------------------------
+1. Navigate to the project root:
+   $ cd iota-secure-wallet
+
+2. Initialize the Database file:
+   $ touch wallet.db
+
+3. Compile the Backend:
+   $ cargo build
+
+3. RUNNING THE SYSTEM
+-----------------------------------------------------------
+1. Start the Rust API Server:
+   $ cargo run
+
+2. Verification:
+   Once the console shows "🚀 Server running on http://localhost:3000",
+   your backend is active.
+
+3. Access the UI:
+   Open your browser (Chrome/Edge/Firefox) and navigate to:
+   http://localhost:3000
+
+4. USER INTERACTIONS (MANUAL AUDIT)
+-----------------------------------------------------------
+Follow this specific flow to verify the security objectives:
+
+Step 1: Registration
+- Click "New Identity". 
+- Enter an email and password. Click "Register".
+- SECURITY ACTION: A QR code and a Base32 secret will appear. 
+  Scan this with Google Authenticator on your phone.
+
+Step 2: Login
+- Switch to the "Login" tab.
+- Enter your email and password.
+- Open your Authenticator app and enter the 6-digit code.
+- SECURITY ACTION: Click "Unlock". Observe the ~0.5s delay. 
+  (This is the PBKDF2 600k iterations protecting your password).
+
+Step 3: Wallet Initialization
+- Once inside the Dashboard, click "Initialize Wallet".
+- SECURITY ACTION: The system generates a 24-word seed in RAM, 
+  encrypts it with AES-256-GCM, and gives you a Shimmer 'rms1' address.
+
+Step 4: Secure Transfer
+- Enter a recipient address and an amount.
+- Click "Authorize & Sign". 
+- SECURITY ACTION: This creates a "Secure Envelope" with a 
+  SHA-256 signature, a unique Nonce, and a Timestamp.
+
+Step 5: Anti-Replay Verification
+- Click "Authorize & Sign" again immediately.
+- RESULT: You should see an error: "Replay detected". 
+  This proves the backend is successfully tracking and burning nonces.
+
+5. RUNNING THE AUTOMATED TEST CASES
+-----------------------------------------------------------
+To run the full security suite (10 test cases) automatically:
+
+1. Open a SECOND terminal window.
+2. Create and activate a Python Virtual Environment:
+   $ python3 -m venv venv
+   $ source venv/bin/activate
+3. Install Audit dependencies:
+   $ pip install requests pyotp
+4. Run the Audit script:
+   $ python3 audit_vault.py
+
+The script will automatically test:
+- Registration & 2FA compatibility.
+- PBKDF2 Timing protection.
+- Account Lockout after 5 failed attempts.
+- AES-GCM Vaulting.
+- Replay Attack blocking.
+- Signature Forgery blocking.
+- Security Audit Log persistence.
+
+6. TROUBLESHOOTING
+-----------------------------------------------------------
+- DB Error (unable to open): Run 'chmod 666 wallet.db'.
+- 2FA Error: Ensure your WSL system time is synced with internet time.
+- Port 3000 busy: Kill existing processes using 'fuser -k 3000/tcp'.
+===========================================================

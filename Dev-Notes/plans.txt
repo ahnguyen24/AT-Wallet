@@ -1,0 +1,71 @@
+ ===========================================================
+PROJECT: AT WALLET - IOTA SECURE VAULT (RUST EDITION)
+ARCHITECT: Blockchain & Security Engineer
+STATUS: Phase 2 Completed & Audited
+===========================================================
+
+1. TECH STACK
+-----------------------------------------------------------
+Backend:
+- Language: Rust (Memory-safe, high-performance)
+- Web Server: Axum (High-concurrency, async)
+- Database: SQLite with SQLx (Type-safe persistence)
+- Blockchain: IOTA Rust SDK (Stardust/Shimmer compatible)
+
+Frontend:
+- Logic: Vanilla JavaScript (Zero-dependency, low attack surface)
+- Styling: CSS3 (Custom security-themed UI)
+- Identity: HTML5 (Stateless architecture)
+
+Audit Tools:
+- Python 3 with pyotp & requests (Automated security testing)
+
+2. SECURITY ALGORITHMS & PROTOCOLS
+-----------------------------------------------------------
+- Key Stretching: PBKDF2-HMAC-SHA512 (600,000 iterations)
+- Data Encryption: AES-256-GCM (Authenticated Encryption for seeds)
+- Password Hashing: Argon2id (MGF1 compliant)
+- Digital Signatures: Ed25519 (EdDSA) for transaction integrity
+- Multi-Factor Auth: RFC 6238 (TOTP) - Google Authenticator compatible
+- Integrity: SHA-256 (WebCrypto API) for Secure Envelopes
+- Anti-Replay: Unique Nonce tracking + 30s Timestamp Window
+
+3. PHASE-WISE ROADMAP
+-----------------------------------------------------------
+[PHASE 1: SECURITY CORE] - COMPLETED
+- Implementation of AES-256-GCM and PBKDF2 logic.
+- Argon2id integration for login security.
+- Ed25519 identity generation logic.
+
+[PHASE 2: PERSISTENCE & SYSTEM STRUCTURE] - COMPLETED
+- SQLx integration with SQLite for 5 Core Entities.
+- Secure Envelope validation (Nonce, Timestamp, Signature).
+- Automated Account Lockout mechanism (5 failed attempts).
+- Multi-Factor Auth (TOTP) with QR Code enrollment.
+- Integrated Vanilla JS Dashboard.
+- Automated Python Security Audit suite.
+
+[PHASE 3: BLOCKCHAIN INTEGRATION] - PLANNED
+- Replacing Mocks with live Shimmer/IOTA 2.0 transaction blocks.
+- UTXO Management and Gas (Mana) calculation.
+- Mnemonic recovery logic (Seed phrase restoration).
+
+[PHASE 4: ADVANCED SECURITY HARDENING] - PLANNED
+- IP-based Rate Limiting (Defense against DoS).
+- JWT (JSON Web Tokens) for persistent session management.
+- Hardware Wallet (Ledger) support via SDK.
+
+[PHASE 5: PRODUCTION & UI] - PLANNED
+- Responsive CSS polishing.
+- Cross-platform desktop builds (Tauri).
+- Security Whitepaper & Final Audit.
+
+4. CORE FUNCTIONS (IMPLEMENTED)
+-----------------------------------------------------------
+- register_user(): Generates Salt/TOTP/Argon2 hash.
+- login_user(): Constant-time PBKDF2 verification + Lockout check.
+- create_wallet(): Generates mnemonic, encrypts with AES-GCM, stores in DB.
+- secure_transfer(): Validates Envelope integrity and prevents replays.
+- get_balance(): (Mocked) Interface for Shimmer network balance.
+- record_security_log(): Audit trail for critical system events.
+===========================================================

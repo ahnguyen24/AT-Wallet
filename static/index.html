@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOTA Secure Vault - Phase 2 Final</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Security Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.2/otpauth.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ IOTA Secure Vault</h1>
+            <div id="session-timer" class="timer hidden">Session expires in: <span id="timer-count">15:00</span></div>
+        </header>
+
+        <!-- Auth Navigation -->
+        <div id="nav-auth" class="nav-bar">
+            <button onclick="showAuth('login')" class="active">Vault Login</button>
+            <button onclick="showAuth('register')">New Identity</button>
+        </div>
+
+        <!-- 1. REGISTRATION -->
+        <div id="register-section" class="card hidden">
+            <h3>Identity Enrollment</h3>
+            <input type="email" id="reg-email" placeholder="Secure Email">
+            <input type="password" id="reg-password" placeholder="Master Password">
+            <button onclick="register()" class="btn-wide">Register & Stretch Key</button>
+            
+            <div id="reg-status" class="status-box hidden">
+                <p><strong>MFA Enrollment:</strong> Scan with Authenticator</p>
+                <div id="qrcode"></div>
+                <p>Secret: <code id="manual-secret"></code></p>
+                <button onclick="generateTestToken()" class="btn-outline">Generate Test Token</button>
+                <p>Current Code: <b id="test-token-display">-</b></p>
+            </div>
+        </div>
+
+        <!-- 2. LOGIN -->
+        <div id="login-section" class="card">
+            <h3>Unlock Vault</h3>
+            <input type="email" id="login-email" placeholder="Email">
+            <input type="password" id="login-password" placeholder="Password">
+            <input type="text" id="login-totp" placeholder="6-Digit 2FA Code">
+            <button onclick="login()" class="btn-wide">Authenticate</button>
+            <p id="login-status" class="error-text"></p>
+        </div>
+
+        <!-- 3. DASHBOARD -->
+        <div id="dashboard-section" class="card hidden">
+            <h3>Vault Dashboard</h3>
+            <div class="stats">
+                <p>ID: <small id="display-userid"></small></p>
+                <div class="balance-area">
+                    <span id="display-balance">0</span> <small>Glow</small>
+                </div>
+                <p><code id="display-address">Wallet not initialized</code></p>
+            </div>
+            <div class="btn-group">
+                <button onclick="createWallet()" id="btn-create">Initialize Wallet</button>
+                <button onclick="checkBalance()" class="btn-outline">Sync Tangle</button>
+                <button onclick="logout()" class="btn-outline" style="border-color:#ef4444">Lock Vault</button>
+            </div>
+        </div>
+
+        <!-- 4. SECURE TRANSFER -->
+        <div id="transfer-section" class="card hidden">
+            <h3>Enveloped Transfer</h3>
+            <input type="text" id="tx-recipient" placeholder="Recipient (rms1...)">
+            <input type="number" id="tx-amount" placeholder="Amount">
+            <button onclick="sendTransfer()" class="btn-danger btn-wide">Sign & Authorize</button>
+            <p id="tx-status"></p>
+        </div>
+
+        <!-- 5. SECURITY AUDIT LOGS -->
+        <div id="audit-section" class="card hidden">
+            <h3>Security Audit Logs</h3>
+            <button onclick="viewLogs()" class="btn-outline btn-wide">Fetch Recent Alerts</button>
+            <div id="log-display" class="log-container"></div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

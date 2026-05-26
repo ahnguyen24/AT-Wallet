@@ -1,0 +1,16 @@
+body { background: #0f172a; color: #f8fafc; font-family: sans-serif; display: flex; justify-content: center; padding: 2rem; }
+.container { width: 100%; max-width: 500px; }
+.card { background: #1e293b; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #334155; }
+input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 4px; box-sizing: border-box; }
+button { background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+button:hover { background: #2563eb; }
+.btn-danger { background: #ef4444; width: 100%; }
+.hidden { display: none; }
+#auth-status { font-size: 0.8rem; color: #94a3b8; }
+.nav-bar { display: flex; gap: 10px; margin-bottom: 1rem; }
+.nav-bar button { flex: 1; background: #334155; }
+.btn-wide { width: 100%; }
+.status-box { background: #064e3b; color: #6ee7b7; padding: 1rem; margin-top: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid #059669; }
+.error-text { color: #f87171; font-size: 0.85rem; margin-top: 0.5rem; }
+code { background: #0f172a; padding: 2px 4px; border-radius: 4px; color: #3b82f6; }
+hr { border: 0; border-top: 1px solid #334155; margin: 1.5rem 0; }
