@@ -152,6 +152,20 @@ async function viewLogs() {
     }
 }
 
+async function checkBalance() {
+    if (!session.address) return;
+    // Requirement: Must send user_id and password to decrypt seed for live sync
+    const { status, data } = await api(`/wallet/balance/${session.address}`, 'POST', {
+        user_id: session.userId,
+        password: session.password
+    });
+    if (status === 200) {
+        document.getElementById('display-balance').innerText = data.balance;
+    } else {
+        alert("Balance sync failed. Check password.");
+    }
+}
+
 // 10. SESSION MANAGEMENT (Auto-Lock)
 function startSessionTimer() {
     document.getElementById('session-timer').classList.remove('hidden');
