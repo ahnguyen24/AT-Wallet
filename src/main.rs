@@ -6,7 +6,7 @@ mod models;
 use axum::{routing::{get, post}, Router, middleware};
 use sqlx::sqlite::SqlitePoolOptions;
 use std::sync::Arc;
-use std::net::SocketAddr; // FIXED: Added this import
+use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
@@ -15,15 +15,30 @@ use crate::api::middleware::{IpRateLimiter, rate_limit_middleware};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let database_url = "sqlite://wallet.db?mode=rwc";
-    let pool = SqlitePoolOptions::new().max_connections(5).connect(database_url).await?;
+    // 1. ENVIRONMENT LOAD (Load .env file if present during dev)
+    dotenvy::dotenv().ok();
+
+    // 2. SECURITY ASSERTION (Application will crash on startup if missing - Fail-Secure)
+    std::env::var("JWT_SECRET")
+        .expect("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is missing!");
+
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "sqlite://wallet.db?mode=rwc".to_string());
+
+    // 3. PERSISTENCE INITIALIZATION (Borrowing &database_url)
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url) // Fixed: Borrowed string slice
+        .await?;
+    
     init_db(&pool).await;
 
+    // 4. RATE LIMITER & CORS SETUP
     let shared_state = Arc::new(AppState { db: pool });
     let rate_limiter = IpRateLimiter::new(); 
-
     let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any);
 
+    // 5. SECURE ROUTING
     let auth_routes = Router::new()
         .route("/register", post(register_user))
         .route("/login", post(login_user))
@@ -39,11 +54,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(cors)
         .with_state(shared_state);
 
+    // 6. START SERVER
     let addr = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("🛡️ IOTA Vault Hardened Active on http://{}", addr);
     
-    // Using SocketAddr to track IP addresses for security
     axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
     Ok(())
 }

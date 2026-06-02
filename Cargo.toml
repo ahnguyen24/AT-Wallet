@@ -37,3 +37,10 @@ jsonwebtoken = "9.3"
 tower = "0.4"
 # For memory safety (wiping RAM)
 zeroize = { version = "1.7", features = ["derive"] }
+
+[profile.release]
+opt-level = 3           # Maximum code optimization
+lto = true              # Link-Time Optimization (merges crates to prevent reverse-engineering)
+codegen-units = 1       # Reduces parallel compilation to allow deeper security optimization
+panic = "abort"         # Prevents stack traces on crash (stops hackers from seeing error origins)
+strip = true            # Strips all symbols and debug info from the binary (Ghidra protection)
