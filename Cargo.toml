@@ -33,3 +33,7 @@ serde_json = "1.0"
 hex = "0.4.3"
 chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15"
+jsonwebtoken = "9.3"
+tower = "0.4"
+# For memory safety (wiping RAM)
+zeroize = { version = "1.7", features = ["derive"] }

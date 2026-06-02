@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IOTA Secure Vault - Phase 2 Final</title>
+    <title>IOTA Secure Vault - Hardened</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Security Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.2/otpauth.umd.min.js"></script>
 </head>
@@ -13,37 +12,34 @@
     <div class="container">
         <header>
             <h1>🛡️ IOTA Secure Vault</h1>
-            <div id="session-timer" class="timer hidden">Session expires in: <span id="timer-count">15:00</span></div>
+            <div id="session-timer" class="timer hidden">Vault auto-locks in: <span id="timer-count">15:00</span></div>
         </header>
 
-        <!-- Auth Navigation -->
+        <!-- Fixed IDs for style logic -->
         <div id="nav-auth" class="nav-bar">
-            <button onclick="showAuth('login')" class="active">Vault Login</button>
-            <button onclick="showAuth('register')">New Identity</button>
+            <button onclick="showAuth('login')" id="btn-nav-login" style="background:#3b82f6">Login</button>
+            <button onclick="showAuth('register')" id="btn-nav-reg">New Identity</button>
         </div>
 
-        <!-- 1. REGISTRATION -->
+        <!-- Registration -->
         <div id="register-section" class="card hidden">
             <h3>Identity Enrollment</h3>
             <input type="email" id="reg-email" placeholder="Secure Email">
             <input type="password" id="reg-password" placeholder="Master Password">
             <button onclick="register()" class="btn-wide">Register & Stretch Key</button>
             
-            <div id="reg-status" class="status-box hidden" style="text-align: center;">
-                <p style="margin-bottom: 15px;"><strong>Scan with Google Authenticator:</strong></p>
-                
-                <!-- This white wrapper is CRITICAL for camera recognition -->
-                <div style="background: white; padding: 20px; display: inline-block; border-radius: 8px;">
+            <div id="reg-status" class="status-box hidden">
+                <p>Scan with Authenticator:</p>
+                <div style="background: white; padding: 15px; display: inline-block; border-radius: 5px;">
                     <div id="qrcode"></div>
                 </div>
-
-                <p style="margin-top: 15px;">Manual Secret: <code id="manual-secret" style="color: #3b82f6; font-size: 1.2rem;"></code></p>
+                <p>Manual Secret: <code id="manual-secret"></code></p>
                 <button onclick="generateTestToken()" class="btn-outline">Generate Test Token</button>
-                <p>Code: <b id="test-token-display" style="color:#4ade80; font-size: 1.5rem;">-</b></p>
+                <p>Code: <b id="test-token-display" style="color:#4ade80">-</b></p>
             </div>
         </div>
 
-        <!-- 2. LOGIN -->
+        <!-- Login -->
         <div id="login-section" class="card">
             <h3>Unlock Vault</h3>
             <input type="email" id="login-email" placeholder="Email">
@@ -53,15 +49,15 @@
             <p id="login-status" class="error-text"></p>
         </div>
 
-        <!-- 3. DASHBOARD -->
+        <!-- Dashboard -->
         <div id="dashboard-section" class="card hidden">
-            <h3>Vault Dashboard</h3>
+            <h3>Vault Active</h3>
             <div class="stats">
                 <p>ID: <small id="display-userid"></small></p>
                 <div class="balance-area">
-                    <span id="display-balance">0</span> <small>Glow</small>
+                    <h2 style="margin:0"><span id="display-balance">0</span> <small>Glow</small></h2>
                 </div>
-                <p><code id="display-address">Wallet not initialized</code></p>
+                <p><code id="display-address" style="font-size: 10px; word-break: break-all;">Not created</code></p>
             </div>
             <div class="btn-group">
                 <button onclick="createWallet()" id="btn-create">Initialize Wallet</button>
@@ -70,20 +66,20 @@
             </div>
         </div>
 
-        <!-- 4. SECURE TRANSFER -->
+        <!-- Transfer -->
         <div id="transfer-section" class="card hidden">
             <h3>Enveloped Transfer</h3>
             <input type="text" id="tx-recipient" placeholder="Recipient (rms1...)">
             <input type="number" id="tx-amount" placeholder="Amount">
             <button onclick="sendTransfer()" class="btn-danger btn-wide">Sign & Authorize</button>
-            <p id="tx-status"></p>
+            <p id="tx-status" style="font-size: 12px; margin-top: 10px;"></p>
         </div>
 
-        <!-- 5. SECURITY AUDIT LOGS -->
+        <!-- Audit -->
         <div id="audit-section" class="card hidden">
             <h3>Security Audit Logs</h3>
             <button onclick="viewLogs()" class="btn-outline btn-wide">Fetch Recent Alerts</button>
-            <div id="log-display" class="log-container"></div>
+            <div id="log-display" style="font-size: 11px; margin-top:10px; max-height: 150px; overflow-y: auto;"></div>
         </div>
     </div>
     <script src="app.js"></script>
