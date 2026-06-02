@@ -10,7 +10,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
 // Import the AppState and handlers
-use crate::api::handlers::{AppState, register_user, login_user, create_wallet, get_balance_handler, secure_transfer, get_logs, init_db};
+use crate::api::handlers::{AppState, register_user, login_user, create_wallet, get_balance_handler, simple_transfer, get_logs, init_db};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/login", post(login_user))
         .route("/api/wallet/create", post(create_wallet))
         .route("/api/wallet/balance/:address", post(get_balance_handler)) // Using POST for pwd
-        .route("/api/wallet/transfer", post(secure_transfer))
+        .route("/api/wallet/transfer", post(simple_transfer))
         .route("/api/logs", get(get_logs))
         .fallback_service(ServeDir::new("static"))
         .layer(cors)

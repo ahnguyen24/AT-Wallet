@@ -46,10 +46,10 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="showAuth()"
+                    <button onclick="showLogin()"
                         class="px-5 py-2 text-white font-semibold hover:bg-emerald-700 rounded-full transition-colors border border-emerald-500">Đăng
                         nhập</button>
-                    <button onclick="showAuth()"
+                    <button onclick="showRegister()"
                         class="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-emerald-900 font-bold rounded-full transition-colors shadow-sm hidden sm:block">Đăng
                         ký ngay</button>
                 </div>
@@ -74,7 +74,7 @@
                             giới hạn.
                         </p>
                         <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                            <button onclick="showAuth()"
+                            <button onclick="showLogin()"
                                 class="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-emerald-900 font-black rounded-full transition-colors shadow-xl text-lg flex items-center justify-center gap-2">
                                 Khám phá ngay <i data-lucide="arrow-right" class="w-5 h-5"></i>
                             </button>
@@ -109,42 +109,42 @@
                 <div class="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 p-8 border border-slate-100">
                     <h3 class="text-center font-bold text-slate-800 text-xl mb-8">Tiện ích nổi bật</h3>
                     <div class="grid grid-cols-3 md:grid-cols-6 gap-6 text-center">
-                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showAuth()">
+                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showLogin()">
                             <div
                                 class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-sm">
                                 <i data-lucide="send-horizontal" class="w-6 h-6"></i>
                             </div>
                             <span class="text-xs font-semibold text-slate-600">Chuyển tiền</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showAuth()">
+                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showLogin()">
                             <div
                                 class="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors shadow-sm">
                                 <i data-lucide="smartphone" class="w-6 h-6"></i>
                             </div>
                             <span class="text-xs font-semibold text-slate-600">Nạp điện thoại</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showAuth()">
+                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showLogin()">
                             <div
                                 class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors shadow-sm">
                                 <i data-lucide="droplet" class="w-6 h-6"></i>
                             </div>
                             <span class="text-xs font-semibold text-slate-600">Thanh toán<br>Điện Nước</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showAuth()">
+                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showLogin()">
                             <div
                                 class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors shadow-sm">
                                 <i data-lucide="piggy-bank" class="w-6 h-6"></i>
                             </div>
                             <span class="text-xs font-semibold text-slate-600">Gửi tiết kiệm</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showAuth()">
+                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showLogin()">
                             <div
                                 class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors shadow-sm">
                                 <i data-lucide="plane" class="w-6 h-6"></i>
                             </div>
                             <span class="text-xs font-semibold text-slate-600">Vé máy bay</span>
                         </div>
-                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showAuth()">
+                        <div class="flex flex-col items-center gap-3 cursor-pointer group" onclick="showLogin()">
                             <div
                                 class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 group-hover:bg-slate-200 transition-colors shadow-sm">
                                 <i data-lucide="grid-2x2" class="w-6 h-6"></i>
@@ -332,8 +332,8 @@
         </main>
     </div>
 
-    <!-- Auth Screen -->
-    <div id="auth-card" class="hidden flex-1 items-center justify-center p-4 bg-slate-50">
+    <!-- Login Screen -->
+    <div id="login-card" class="hidden flex-1 items-center justify-center p-4 bg-slate-50">
         <div
             class="max-w-md w-full bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 p-10 border border-slate-100 relative">
             <button onclick="hideAuth()"
@@ -349,11 +349,12 @@
             </div>
             <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tên đăng nhập</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
                     <div class="relative">
-                        <i data-lucide="user"
+                        <i data-lucide="mail"
                             class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-                        <input id="username" type="text" placeholder="Nhập tên đăng nhập" autocomplete="off"
+                        <input id="login-username" type="email" placeholder="Nhập địa chỉ email (Gmail)"
+                            autocomplete="off"
                             class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
                     </div>
                 </div>
@@ -362,27 +363,157 @@
                     <div class="relative">
                         <i data-lucide="lock"
                             class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-                        <input id="password" type="password" placeholder="••••••••" autocomplete="off"
+                        <input id="login-password" type="password" placeholder="••••••••" autocomplete="off"
                             class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
                     </div>
                 </div>
+
                 <div class="pt-4 space-y-4">
                     <button onclick="handleAuth('login')"
                         class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-md shadow-emerald-200 transition-all active:scale-95 text-lg flex justify-center items-center gap-2">
                         Đăng nhập
                     </button>
 
-                    <div class="relative flex items-center justify-center py-2">
-                        <div class="border-t border-slate-200 w-full"></div>
-                        <span
-                            class="bg-white px-4 text-xs text-slate-400 absolute uppercase tracking-wider font-semibold">hoặc</span>
+                    <div class="text-center mt-4">
+                        <span class="text-sm text-slate-500">Chưa có tài khoản?</span>
+                        <button onclick="showRegister()"
+                            class="text-sm font-bold text-emerald-600 hover:underline ml-1">Đăng ký ngay</button>
                     </div>
+                </div>
+                <div
+                    class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
+                    <i data-lucide="lock" class="w-4 h-4 text-emerald-500"></i>
+                    Được bảo vệ bởi mã hóa 256-bit
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <button onclick="handleAuth('register')"
-                        class="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold py-4 rounded-xl transition-all active:scale-95 text-lg">
-                        Tạo tài khoản mới
+    <!-- Register Screen -->
+    <div id="register-card" class="hidden flex-1 items-center justify-center p-4 bg-slate-50">
+        <div
+            class="max-w-md w-full bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 p-10 border border-slate-100 relative">
+            <button onclick="hideAuth()"
+                class="absolute top-6 left-6 text-slate-400 hover:text-slate-800 transition-colors">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </button>
+            <div class="text-center mb-6 mt-2">
+                <div class="inline-flex p-3 bg-emerald-50 text-emerald-600 rounded-2xl mb-3">
+                    <i data-lucide="user-plus" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Tạo tài khoản mới</h2>
+                <p class="text-slate-500 mt-1 text-sm">Đăng ký tài khoản bảo mật AT-Wallet</p>
+            </div>
+
+            <!-- Progress Indicator -->
+            <div class="flex items-center justify-between mb-8 px-2">
+                <div class="flex flex-col items-center flex-1">
+                    <div id="step-dot-1" class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-sm transition-all duration-300">1</div>
+                    <span id="step-label-1" class="text-[10px] font-bold text-emerald-600 mt-1">Tài khoản</span>
+                </div>
+                <div id="step-line-1" class="h-1 flex-1 bg-slate-100 mx-2 rounded-full transition-all duration-300"></div>
+                <div class="flex flex-col items-center flex-1">
+                    <div id="step-dot-2" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-sm transition-all duration-300">2</div>
+                    <span id="step-label-2" class="text-[10px] font-bold text-slate-400 mt-1">Xác thực KYC</span>
+                </div>
+                <div id="step-line-2" class="h-1 flex-1 bg-slate-100 mx-2 rounded-full transition-all duration-300"></div>
+                <div class="flex flex-col items-center flex-1">
+                    <div id="step-dot-3" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-sm transition-all duration-300">3</div>
+                    <span id="step-label-3" class="text-[10px] font-bold text-slate-400 mt-1">Mã PIN</span>
+                </div>
+            </div>
+
+            <div class="space-y-5">
+                <!-- STEP 1: CREDENTIALS -->
+                <div id="register-step-1" class="space-y-5 transition-all duration-300">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                        <div class="relative">
+                            <i data-lucide="mail"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input id="register-username" type="email" placeholder="Nhập địa chỉ email mới"
+                                autocomplete="off"
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Mật khẩu đăng nhập</label>
+                        <div class="relative">
+                            <i data-lucide="lock"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input id="register-password" type="password" placeholder="••••••••" autocomplete="off"
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: KYC INFO -->
+                <div id="register-step-2" class="hidden space-y-5 transition-all duration-300">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Họ và tên</label>
+                        <div class="relative">
+                            <i data-lucide="user"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input id="register-fullname" type="text" placeholder="Nhập họ và tên đầy đủ"
+                                autocomplete="off"
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Số điện thoại</label>
+                        <div class="relative">
+                            <i data-lucide="phone"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input id="register-phone" type="tel" placeholder="Nhập số điện thoại"
+                                autocomplete="off"
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Số CCCD</label>
+                        <div class="relative">
+                            <i data-lucide="credit-card"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input id="register-cccd" type="text" placeholder="Nhập số CCCD"
+                                autocomplete="off"
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: TRANSACTION PIN -->
+                <div id="register-step-3" class="hidden space-y-5 transition-all duration-300">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Mã PIN giao dịch (6 số)</label>
+                        <div class="relative">
+                            <i data-lucide="key-round"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input id="register-pin" type="password" placeholder="••••••" maxlength="6" pattern="[0-9]*" inputmode="numeric"
+                                autocomplete="off"
+                                class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-800">
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">Mã PIN này được sử dụng riêng biệt cho mục đích bảo mật chuyển tiền.</p>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="pt-4 flex gap-3">
+                    <button id="register-prev-btn" onclick="prevRegisterStep()"
+                        class="hidden flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-4 rounded-xl transition-all active:scale-95 text-lg">
+                        Quay lại
+                    </button>
+                    <button id="register-next-btn" onclick="nextRegisterStep()"
+                        class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-md shadow-emerald-200 transition-all active:scale-95 text-lg flex justify-center items-center gap-2">
+                        Tiếp tục
                     </button>
                 </div>
+
+                <div class="text-center mt-4">
+                    <span class="text-sm text-slate-500">Đã có tài khoản?</span>
+                    <button onclick="showLogin()"
+                        class="text-sm font-bold text-emerald-600 hover:underline ml-1">Đăng nhập ngay</button>
+                </div>
+
                 <div
                     class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
                     <i data-lucide="lock" class="w-4 h-4 text-emerald-500"></i>
@@ -415,14 +546,17 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <div class="text-right hidden sm:block">
-                        <h2 id="user-name-display" class="font-semibold text-sm">---</h2>
-                        <span id="trust-level-tag"
-                            class="text-[10px] font-bold bg-emerald-500 px-2 py-0.5 rounded-full uppercase text-white">Normal</span>
+                    <!-- Clickable user profile trigger -->
+                    <div onclick="switchToProfile()" class="flex items-center gap-3 cursor-pointer group">
+                        <div class="text-right hidden sm:block">
+                            <h2 id="user-name-display" class="font-semibold text-sm group-hover:text-yellow-300 transition-colors">---</h2>
+                            <span id="trust-level-tag"
+                                class="text-[10px] font-bold bg-emerald-500 px-2 py-0.5 rounded-full uppercase text-white">Normal</span>
+                        </div>
+                        <div id="user-initial"
+                            class="w-10 h-10 bg-white text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg border-2 border-emerald-500 group-hover:border-yellow-400 group-hover:scale-105 transition-all">
+                            U</div>
                     </div>
-                    <div id="user-initial"
-                        class="w-10 h-10 bg-white text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg border-2 border-emerald-500 cursor-pointer">
-                        U</div>
                     <button onclick="handleLogout()"
                         class="p-2 hover:bg-emerald-600 rounded-full transition-colors text-emerald-100 hover:text-white"
                         title="Đăng xuất">
@@ -470,6 +604,7 @@
                         <canvas id="trustChart"></canvas>
                     </div>
                 </div>
+
             </div>
 
             <!-- Right Column: Transactions or Transfer Form -->
@@ -524,13 +659,13 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Xác nhận bằng mật khẩu</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Mã PIN giao dịch (6 số)</label>
                             <div class="relative">
-                                <i data-lucide="lock"
+                                <i data-lucide="key-round"
                                     class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-                                <input id="tx-password" type="password"
+                                <input id="tx-pin" type="password" maxlength="6" pattern="[0-9]*" inputmode="numeric"
                                     class="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-base"
-                                    placeholder="Nhập lại mật khẩu của bạn">
+                                    placeholder="Nhập mã PIN giao dịch 6 chữ số">
                             </div>
                         </div>
 
@@ -538,6 +673,53 @@
                             class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-md shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2 mt-8 text-lg">
                             XÁC NHẬN GỬI TIỀN
                         </button>
+                    </div>
+                </div>
+
+                <!-- Profile Screen -->
+                <div id="profile-screen"
+                    class="hidden bg-white rounded-2xl shadow-soft border border-slate-100 p-8 h-full flex flex-col">
+                    <h3 class="font-semibold text-slate-800 text-xl mb-6 flex items-center gap-2">
+                        <i data-lucide="user-circle" class="text-emerald-600"></i> Thông tin cá nhân & KYC
+                    </h3>
+                    
+                    <div class="flex flex-col md:flex-row items-center gap-8 border-b border-slate-100 pb-8 mb-8">
+                        <div class="relative">
+                            <div id="profile-avatar" class="w-24 h-24 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-extrabold text-4xl border-4 border-emerald-50">
+                                U
+                            </div>
+                            <div class="absolute bottom-0 right-0 bg-emerald-500 text-white p-1.5 rounded-full border-2 border-white" title="Đã xác thực eKYC">
+                                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="text-center md:text-left space-y-1">
+                            <h4 id="profile-fullname" class="text-2xl font-bold text-slate-800">---</h4>
+                            <p id="profile-email" class="text-slate-400 font-medium text-sm">---</p>
+                            <span class="inline-block text-[11px] font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase">Đã xác thực eKYC</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-1.5 md:col-span-2">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Họ và tên đầy đủ</span>
+                            <p id="profile-info-fullname" class="text-slate-800 font-extrabold text-lg">---</p>
+                        </div>
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-1.5">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Số điện thoại liên hệ</span>
+                            <p id="profile-info-phone" class="text-slate-800 font-extrabold text-lg">---</p>
+                        </div>
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-1.5">
+                            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Số thẻ CCCD / Hộ chiếu</span>
+                            <p id="profile-info-cccd" class="text-slate-800 font-extrabold text-lg">---</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-4 items-start">
+                        <i data-lucide="alert-triangle" class="text-amber-500 w-6 h-6 shrink-0 mt-0.5"></i>
+                        <div class="space-y-1">
+                            <h5 class="font-bold text-amber-800 text-sm">Về việc thay đổi thông tin KYC</h5>
+                            <p class="text-xs text-amber-700 leading-relaxed font-medium">Để đảm bảo an toàn tuyệt đối cho tài sản trên ví, các thông tin định danh (Họ tên, SĐT, CCCD) sau khi xác thực không thể tự thay đổi. Nếu có sai sót, vui lòng liên hệ bộ phận hỗ trợ khách hàng để được trợ giúp.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -549,20 +731,60 @@
         class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-4 rounded-xl shadow-2xl font-medium text-white transition-all z-50 flex items-center gap-3">
     </div>
 
+    <!-- TOTP Setup Modal (hiện sau khi đăng ký) -->
+    <div id="totp-setup"
+        class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl border border-emerald-100">
+            <div class="text-center mb-6">
+                <div class="inline-flex p-3 bg-emerald-50 text-emerald-600 rounded-2xl mb-3">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Thiết lập xác thực 2 bước</h3>
+                <p class="text-sm text-slate-500 mt-2">Lưu mã bí mật này vào <strong>Google Authenticator</strong> hoặc
+                    <strong>Authy</strong> ngay bây giờ:</p>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-4 font-mono text-center text-base font-bold text-emerald-700 break-all mb-4 border border-emerald-200 select-all"
+                id="totp-secret-display">
+                ---
+            </div>
+            <p class="text-xs text-slate-400 text-center mb-6">⚠️ Bạn sẽ cần mã này mỗi khi đăng nhập. Không thể khôi
+                phục nếu mất!</p>
+            <button onclick="document.getElementById('totp-setup').classList.add('hidden'); showLogin();"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl transition-all active:scale-95">
+                Đã lưu, quay lại đăng nhập
+            </button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
         lucide.createIcons();
 
         // UI toggles
-        function showAuth() {
+        function showLogin() {
             document.getElementById('landing-page').classList.add('hidden');
-            document.getElementById('auth-card').classList.remove('hidden');
-            document.getElementById('auth-card').classList.add('flex');
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('register-card').classList.remove('flex');
+            document.getElementById('login-card').classList.remove('hidden');
+            document.getElementById('login-card').classList.add('flex');
+        }
+
+        function showRegister() {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('flex');
+            document.getElementById('register-card').classList.remove('hidden');
+            document.getElementById('register-card').classList.add('flex');
+            if (typeof resetRegisterWizard === 'function') {
+                resetRegisterWizard();
+            }
         }
 
         function hideAuth() {
-            document.getElementById('auth-card').classList.add('hidden');
-            document.getElementById('auth-card').classList.remove('flex');
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('flex');
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('register-card').classList.remove('flex');
             document.getElementById('landing-page').classList.remove('hidden');
         }
 
