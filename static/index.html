@@ -610,19 +610,21 @@
             <!-- Right Column: Transactions or Transfer Form -->
             <div class="md:col-span-8">
 
-                <!-- Home Screen Content (Recent Transactions placeholder) -->
+                <!-- Home Screen Content -->
                 <div id="home-screen"
                     class="bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden h-full min-h-[400px]">
                     <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                         <h3 class="font-semibold text-slate-800 text-lg">Hoạt động gần đây</h3>
                         <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
                     </div>
-                    <div class="p-8 text-center text-slate-400 flex flex-col items-center justify-center h-64">
-                        <div class="bg-slate-50 p-4 rounded-full mb-4">
-                            <i data-lucide="history" class="w-8 h-8 text-slate-300"></i>
+                    <div id="transactions-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                        <div class="p-8 text-center text-slate-400 flex flex-col items-center justify-center h-64" id="tx-placeholder">
+                            <div class="bg-slate-50 p-4 rounded-full mb-4">
+                                <i data-lucide="history" class="w-8 h-8 text-slate-300"></i>
+                            </div>
+                            <p class="font-medium text-slate-500">Các giao dịch của bạn sẽ hiển thị tại đây.</p>
+                            <p class="text-sm mt-2">Dữ liệu on-chain đang được đồng bộ...</p>
                         </div>
-                        <p class="font-medium text-slate-500">Các giao dịch của bạn sẽ hiển thị tại đây.</p>
-                        <p class="text-sm mt-2">Dữ liệu on-chain đang được đồng bộ...</p>
                     </div>
                 </div>
 
@@ -634,13 +636,22 @@
                     </h3>
                     <div class="space-y-6 max-w-xl">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Người nhận</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Số điện thoại người nhận</label>
                             <div class="relative">
-                                <i data-lucide="user"
+                                <i data-lucide="phone"
                                     class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-                                <input id="recipient" type="text"
+                                <input id="recipient-phone" type="tel" maxlength="10"
                                     class="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-base"
-                                    placeholder="Nhập tên người dùng hoặc địa chỉ ví">
+                                    placeholder="Nhập số điện thoại người nhận (10 số)">
+                            </div>
+                            
+                            <!-- Recipient lookup details -->
+                            <div id="recipient-lookup-info" class="hidden mt-3 bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3 transition-all duration-300">
+                                <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-lg" id="recipient-avatar">?</div>
+                                <div>
+                                    <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Người nhận hợp lệ</p>
+                                    <p class="text-base text-slate-800 font-extrabold" id="recipient-name">---</p>
+                                </div>
                             </div>
                         </div>
 
@@ -648,7 +659,7 @@
                             <label class="block text-sm font-medium text-slate-700 mb-4">Số tiền gửi</label>
                             <div class="flex items-center gap-4">
                                 <span class="text-3xl font-light text-emerald-600 font-bold">◎</span>
-                                <input id="amount" type="number"
+                                <input id="amount" type="number" step="any"
                                     class="w-full bg-transparent text-5xl outline-none text-slate-800 placeholder-slate-300"
                                     placeholder="0.0">
                             </div>
@@ -659,19 +670,19 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Mã PIN giao dịch (6 số)</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Nội dung chuyển khoản</label>
                             <div class="relative">
-                                <i data-lucide="key-round"
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-                                <input id="tx-pin" type="password" maxlength="6" pattern="[0-9]*" inputmode="numeric"
-                                    class="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-base"
-                                    placeholder="Nhập mã PIN giao dịch 6 chữ số">
+                                <i data-lucide="message-square"
+                                    class="absolute left-4 top-4 text-slate-400 w-5 h-5"></i>
+                                <textarea id="tx-message" rows="2"
+                                    class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-base resize-none"
+                                    placeholder="Nhập nội dung chuyển tiền (không bắt buộc)"></textarea>
                             </div>
                         </div>
 
-                        <button onclick="handleTransfer()"
+                        <button onclick="openPinModal()"
                             class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl shadow-md shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2 mt-8 text-lg">
-                            XÁC NHẬN GỬI TIỀN
+                            TIẾP TỤC
                         </button>
                     </div>
                 </div>
@@ -756,7 +767,46 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Transaction PIN Verification Modal -->
+    <div id="pin-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl border border-emerald-100 space-y-6">
+            <div class="text-center">
+                <div class="inline-flex p-3 bg-emerald-50 text-emerald-600 rounded-2xl mb-3">
+                    <i data-lucide="lock" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Xác thực giao dịch</h3>
+                <p class="text-xs text-slate-500 mt-2">Vui lòng nhập mã PIN giao dịch 6 chữ số để xác nhận chuyển tiền.</p>
+            </div>
+            
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 text-center text-sm">
+                <p class="text-slate-500">Gửi đến: <span id="modal-recipient-name" class="font-bold text-slate-800">---</span></p>
+                <p class="text-slate-500">Số tiền: <span id="modal-amount" class="font-bold text-emerald-600 text-lg">0.00 SOL</span></p>
+            </div>
+
+            <div>
+                <div class="relative">
+                    <i data-lucide="key-round"
+                        class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                    <input id="modal-tx-pin" type="password" maxlength="6" pattern="[0-9]*" inputmode="numeric"
+                        class="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-center text-2xl tracking-widest font-bold"
+                        placeholder="••••••">
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closePinModal()"
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 rounded-xl transition-all active:scale-95">
+                    Hủy
+                </button>
+                <button onclick="handleTransfer()"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all active:scale-95">
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=5"></script>
     <script>
         lucide.createIcons();
 

@@ -40,11 +40,17 @@ pub struct ActionRequest {
 }
 
 #[derive(serde::Deserialize)]
+pub struct LookupRequest {
+    pub phone: String,
+}
+
+#[derive(serde::Deserialize)]
 pub struct TransferRequest {
     pub sender_id: String,
     pub recipient: String,
     pub amount: f64,
     pub pin: String,
+    pub message: Option<String>,
 }
 
 async fn record_security_log(pool: &SqlitePool, event: &str, severity: &str, details: &str) {
@@ -225,16 +231,28 @@ pub async fn simple_transfer(
         return Err((StatusCode::BAD_REQUEST, Json(json!({"error": "Số dư không đủ để thực hiện giao dịch"}))));
     }
 
-    // 5. Tìm ví người nhận (qua email hoặc địa chỉ ví)
-    let recipient_wallet: WalletRecord = if payload.recipient.contains('@') {
+    // 5. Tìm ví và người dùng nhận (qua SĐT, email hoặc địa chỉ ví)
+    let (recipient_user, recipient_wallet): (User, WalletRecord) = if payload.recipient.contains('@') {
         let rec_user: User = sqlx::query_as("SELECT * FROM users WHERE email = ?").bind(&payload.recipient).fetch_one(&state.db).await
             .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy người nhận với email này"}))))?;
         
-        sqlx::query_as("SELECT * FROM wallets WHERE user_id = ?").bind(&rec_user.id).fetch_one(&state.db).await
-            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Người nhận chưa kích hoạt ví"}))))?
+        let wallet = sqlx::query_as("SELECT * FROM wallets WHERE user_id = ?").bind(&rec_user.id).fetch_one(&state.db).await
+            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Người nhận chưa kích hoạt ví"}))))?;
+        (rec_user, wallet)
+    } else if payload.recipient.len() > 20 && !payload.recipient.chars().all(|c| c.is_ascii_digit()) {
+        let wallet: WalletRecord = sqlx::query_as("SELECT * FROM wallets WHERE address = ?").bind(&payload.recipient).fetch_one(&state.db).await
+            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy ví người nhận với địa chỉ này"}))))?;
+        let rec_user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?").bind(&wallet.user_id).fetch_one(&state.db).await
+            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy người nhận sở hữu ví này"}))))?;
+        (rec_user, wallet)
     } else {
-        sqlx::query_as("SELECT * FROM wallets WHERE address = ?").bind(&payload.recipient).fetch_one(&state.db).await
-            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy ví người nhận với địa chỉ này"}))))?
+        // Tìm theo Số điện thoại
+        let rec_user: User = sqlx::query_as("SELECT * FROM users WHERE phone = ?").bind(&payload.recipient).fetch_one(&state.db).await
+            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy người nhận với số điện thoại này"}))))?;
+        
+        let wallet = sqlx::query_as("SELECT * FROM wallets WHERE user_id = ?").bind(&rec_user.id).fetch_one(&state.db).await
+            .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Người nhận chưa kích hoạt ví"}))))?;
+        (rec_user, wallet)
     };
 
     if sender_wallet.id == recipient_wallet.id {
@@ -261,9 +279,10 @@ pub async fn simple_transfer(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))))?;
 
     // 7. Ghi nhật ký bảo mật
+    let msg = payload.message.as_deref().unwrap_or("");
     let details = format!(
-        "Transfer: sender_id={}, sender_email={}, recipient_id={}, recipient_address={}, amount={} SOL",
-        sender.id, sender.email, recipient_wallet.user_id, recipient_wallet.address, payload.amount
+        "Transfer: sender_id={}, sender_email={}, sender_name={}, recipient_wallet_id={}, recipient_address={}, recipient_name={}, amount={} SOL, message='{}'",
+        sender.id, sender.email, sender.full_name, recipient_wallet.id, recipient_wallet.address, recipient_user.full_name, payload.amount, msg
     );
     record_security_log(&state.db, "TRANSFER", "INFO", &details).await;
 
@@ -271,6 +290,63 @@ pub async fn simple_transfer(
         "status": "success",
         "message": format!("Đã chuyển thành công {} SOL tới {}", payload.amount, payload.recipient)
     }))))
+}
+
+pub async fn lookup_by_phone(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<LookupRequest>,
+) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
+    let user: Option<User> = sqlx::query_as("SELECT * FROM users WHERE phone = ?")
+        .bind(&payload.phone)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))))?;
+
+    match user {
+        Some(u) => Ok((StatusCode::OK, Json(json!({
+            "status": "success",
+            "full_name": u.full_name,
+            "email": u.email
+        })))),
+        None => Err((StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy người dùng với số điện thoại này"}))))
+    }
+}
+
+#[derive(serde::Deserialize)]
+pub struct LookupGeneralRequest {
+    pub phone: Option<String>,
+    pub email: Option<String>,
+    pub address: Option<String>,
+}
+
+pub async fn lookup_user(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<LookupGeneralRequest>,
+) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
+    let user: Option<User> = if let Some(phone) = &payload.phone {
+        sqlx::query_as("SELECT * FROM users WHERE phone = ?").bind(phone).fetch_optional(&state.db).await.unwrap_or(None)
+    } else if let Some(email) = &payload.email {
+        sqlx::query_as("SELECT * FROM users WHERE email = ?").bind(email).fetch_optional(&state.db).await.unwrap_or(None)
+    } else if let Some(address) = &payload.address {
+        let wallet: Option<WalletRecord> = sqlx::query_as("SELECT * FROM wallets WHERE address = ?").bind(address).fetch_optional(&state.db).await.unwrap_or(None);
+        if let Some(w) = wallet {
+            sqlx::query_as("SELECT * FROM users WHERE id = ?").bind(&w.user_id).fetch_optional(&state.db).await.unwrap_or(None)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    match user {
+        Some(u) => Ok((StatusCode::OK, Json(json!({
+            "status": "success",
+            "full_name": u.full_name,
+            "email": u.email,
+            "phone": u.phone
+        })))),
+        None => Err((StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy người dùng"}))))
+    }
 }
 
 pub async fn get_logs(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {

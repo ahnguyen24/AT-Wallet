@@ -25,3 +25,4 @@ thumbs.db
 
 /wallet_storage/
 /stronghold_db/
+.codegraph/

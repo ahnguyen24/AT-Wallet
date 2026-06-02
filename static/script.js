@@ -2,6 +2,7 @@ const BASE_URL = "/api";
 let currentUser = null;
 let balancePollId = null;
 let trustChart = null;
+let currentUserAddress = null;
 
 // --- UTILS ---
 function showToast(message, type = 'success') {
@@ -94,8 +95,8 @@ async function handleAuth(type) {
     console.log(`Đang thực hiện ${type}...`);
 
     try {
-        const body = type === 'login' 
-            ? { email: username, password } 
+        const body = type === 'login'
+            ? { email: username, password }
             : { email: username, password, full_name, phone, cccd, pin };
 
         const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -204,6 +205,10 @@ async function fetchWalletInfo() {
             if (bal2) bal2.innerText = balanceValue.toFixed(4) + ' SOL';
             if (tsVal) tsVal.innerText = "10.0"; // Điểm tín nhiệm giả lập
 
+            // Cập nhật địa chỉ ví hiện tại và tải các giao dịch
+            currentUserAddress = info.address;
+            fetchRecentTransactions();
+
             // Hiển thị thông tin KYC ở trang Profile
             const prFN = document.getElementById('profile-fullname');
             const prEM = document.getElementById('profile-email');
@@ -246,11 +251,17 @@ async function fetchWalletInfo() {
     }
 }
 
+function clearTransferForm() {
+    if (document.getElementById('recipient-phone')) document.getElementById('recipient-phone').value = "";
+    if (document.getElementById('amount')) document.getElementById('amount').value = "";
+    if (document.getElementById('tx-message')) document.getElementById('tx-message').value = "";
+    if (document.getElementById('modal-tx-pin')) document.getElementById('modal-tx-pin').value = "";
+    document.getElementById('recipient-lookup-info')?.classList.add('hidden');
+}
+
 // --- CHUYỂN TAB ---
 function switchToHome() {
-    if (document.getElementById('recipient')) document.getElementById('recipient').value = "";
-    if (document.getElementById('amount')) document.getElementById('amount').value = "";
-    if (document.getElementById('tx-pin')) document.getElementById('tx-pin').value = "";
+    clearTransferForm();
 
     document.getElementById('home-screen')?.classList.remove('hidden');
     document.getElementById('trans-screen')?.classList.add('hidden');
@@ -273,9 +284,7 @@ function switchToHome() {
 }
 
 function switchToTrans() {
-    if (document.getElementById('recipient')) document.getElementById('recipient').value = "";
-    if (document.getElementById('amount')) document.getElementById('amount').value = "";
-    if (document.getElementById('tx-pin')) document.getElementById('tx-pin').value = "";
+    clearTransferForm();
 
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('trans-screen')?.classList.remove('hidden');
@@ -298,9 +307,7 @@ function switchToTrans() {
 }
 
 function switchToProfile() {
-    if (document.getElementById('recipient')) document.getElementById('recipient').value = "";
-    if (document.getElementById('amount')) document.getElementById('amount').value = "";
-    if (document.getElementById('tx-pin')) document.getElementById('tx-pin').value = "";
+    clearTransferForm();
 
     document.getElementById('home-screen')?.classList.add('hidden');
     document.getElementById('trans-screen')?.classList.add('hidden');
@@ -326,40 +333,159 @@ function switchToProfile() {
 }
 
 // --- CHUYỂN TIỀN ---
-async function handleTransfer() {
-    const recipient = document.getElementById('recipient').value.trim();
-    const amount = document.getElementById('amount').value;
-    const pin = document.getElementById('tx-pin').value;
+let pendingTransferData = null;
 
-    if (!recipient || !amount || !pin) return showToast("Vui lòng điền đủ thông tin", "error");
-    if (parseFloat(amount) <= 0) return showToast("Số tiền không hợp lệ", "error");
-    if (parseFloat(amount) > 50.0) return showToast("Hạn mức tối đa là 50 SOL cho mỗi giao dịch", "error");
+function normalizePhoneNumber(rawPhone) {
+    let phone = rawPhone.replace(/\D/g, ""); // Remove non-digits
+    if (phone.startsWith("84") && phone.length === 11) {
+        phone = "0" + phone.slice(2);
+    }
+    return phone;
+}
+
+function openPinModal() {
+    console.log("openPinModal triggered");
+    const rawPhone = document.getElementById('recipient-phone')?.value.trim() || "";
+    const phone = normalizePhoneNumber(rawPhone);
+    const amount = document.getElementById('amount')?.value || "";
+    const message = document.getElementById('tx-message')?.value.trim() || "";
+    const nameEl = document.getElementById('recipient-name');
+
+    console.log("Validation details:", { rawPhone, normalizedPhone: phone, amount, message, name: nameEl?.textContent });
+
+    if (!phone || phone.length !== 10) {
+        return showToast("Vui lòng nhập đúng số điện thoại người nhận (10 chữ số)", "error");
+    }
+
+    const infoBox = document.getElementById('recipient-lookup-info');
+    if (!infoBox || infoBox.classList.contains('hidden') || !nameEl || nameEl.textContent === '---' || nameEl.textContent.includes('chưa đăng ký') || nameEl.textContent.includes('không hợp lệ')) {
+        return showToast("Không tìm thấy người nhận hợp lệ", "error");
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+        return showToast("Số tiền gửi phải lớn hơn 0", "error");
+    }
+    if (parseFloat(amount) > 50.0) {
+        return showToast("Hạn mức tối đa là 50 SOL cho mỗi giao dịch", "error");
+    }
+
+    // Save pending data
+    pendingTransferData = { phone, amount, message };
+    console.log("Pending transfer set:", pendingTransferData);
+
+    // Update modal details
+    const modalName = document.getElementById('modal-recipient-name');
+    const modalAmt = document.getElementById('modal-amount');
+    const modalPin = document.getElementById('modal-tx-pin');
+    const pinModal = document.getElementById('pin-modal');
+
+    if (modalName) modalName.textContent = nameEl.textContent;
+    if (modalAmt) modalAmt.textContent = parseFloat(amount).toFixed(4) + ' SOL';
+    if (modalPin) modalPin.value = "";
+    if (pinModal) {
+        pinModal.classList.remove('hidden');
+        modalPin?.focus();
+        console.log("PIN modal shown and focused");
+    }
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function closePinModal() {
+    document.getElementById('pin-modal')?.classList.add('hidden');
+    pendingTransferData = null;
+}
+
+async function handleTransfer() {
+    const pinEl = document.getElementById('modal-tx-pin');
+    const pin = pinEl ? pinEl.value : "";
+
+    if (!pendingTransferData) return showToast("Không có dữ liệu giao dịch", "error");
+    if (!pin) return showToast("Vui lòng nhập mã PIN giao dịch", "error");
     if (pin.length !== 6 || !/^\d+$/.test(pin)) return showToast("Mã PIN giao dịch phải gồm đúng 6 chữ số", "error");
 
     try {
-        // Gửi giao dịch qua endpoint /api/wallet/transfer
         const res = await fetch(`${BASE_URL}/wallet/transfer`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 sender_id: currentUser.user_id,
-                recipient: recipient,
-                amount: parseFloat(amount),
-                pin: pin
+                recipient: pendingTransferData.phone,
+                amount: parseFloat(pendingTransferData.amount),
+                pin: pin,
+                message: pendingTransferData.message || null
             }),
         });
 
         const data = await res.json();
         if (res.ok) {
             showToast(data.message || "Chuyển tiền thành công!");
-            document.getElementById('tx-pin').value = "";
+            closePinModal();
+            clearTransferForm();
             switchToHome();
             fetchWalletInfo(); // Cập nhật số dư ngay lập tức
         } else {
             showToast(data.error || "Giao dịch bị từ chối", "error");
+            if (pinEl) pinEl.value = "";
         }
     } catch (e) {
         showToast("Lỗi hệ thống", "error");
+    }
+}
+
+// Lắng nghe sự kiện nhập số điện thoại để tìm kiếm người nhận
+document.addEventListener("DOMContentLoaded", () => {
+    setupPhoneLookupListener();
+});
+
+// Fallback if DOMContentLoaded already fired
+if (document.readyState === "interactive" || document.readyState === "complete") {
+    setupPhoneLookupListener();
+}
+
+function setupPhoneLookupListener() {
+    const phoneInput = document.getElementById('recipient-phone');
+    if (!phoneInput) return;
+
+    phoneInput.removeEventListener('input', handlePhoneInput);
+    phoneInput.addEventListener('input', handlePhoneInput);
+}
+
+async function handlePhoneInput(e) {
+    const rawPhone = e.target.value.trim();
+    const phone = normalizePhoneNumber(rawPhone);
+    console.log("handlePhoneInput raw:", rawPhone, "normalized:", phone);
+
+    const infoBox = document.getElementById('recipient-lookup-info');
+    const nameEl = document.getElementById('recipient-name');
+    const avatarEl = document.getElementById('recipient-avatar');
+
+    if (phone.length !== 10) {
+        infoBox?.classList.add('hidden');
+        return;
+    }
+
+    try {
+        console.log("Searching user by phone:", phone);
+        const res = await fetch(`${BASE_URL}/user/lookup-by-phone`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        });
+        const data = await res.json();
+        console.log("Lookup result:", data);
+        if (res.ok && data.status === 'success') {
+            if (nameEl) nameEl.textContent = data.full_name;
+            if (avatarEl) avatarEl.textContent = data.full_name[0].toUpperCase();
+            infoBox?.classList.remove('hidden');
+        } else {
+            if (nameEl) nameEl.textContent = 'Người nhận chưa đăng ký hoặc thông tin không hợp lệ';
+            if (avatarEl) avatarEl.textContent = '?';
+            infoBox?.classList.remove('hidden');
+        }
+    } catch (err) {
+        console.error("Lỗi tìm kiếm người nhận:", err);
     }
 }
 
@@ -556,5 +682,215 @@ function prevRegisterStep() {
     if (currentRegisterStep > 1) {
         currentRegisterStep--;
         updateRegisterStepsUI();
+    }
+}
+
+// --- TẢI LỊCH SỬ GIAO DỊCH ---
+const userNamesCache = {};
+
+async function resolveName(type, value) {
+    const cacheKey = `${type}:${value}`;
+    if (userNamesCache[cacheKey]) {
+        return userNamesCache[cacheKey];
+    }
+    try {
+        const body = {};
+        body[type] = value;
+        const res = await fetch(`${BASE_URL}/user/lookup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success' && data.full_name) {
+                userNamesCache[cacheKey] = data.full_name;
+                return data.full_name;
+            }
+        }
+    } catch (e) {
+        console.error("Error resolving name:", e);
+    }
+    const fallbackVal = type === 'address' 
+        ? (value ? value.slice(0, 8) + '...' + value.slice(-6) : 'N/A')
+        : value;
+    userNamesCache[cacheKey] = fallbackVal;
+    return fallbackVal;
+}
+
+function extractVal(details, key) {
+    // Try to match key='value' (single quotes)
+    const quoteRegex = new RegExp(key + "='([^']*)'");
+    const quoteMatch = details.match(quoteRegex);
+    if (quoteMatch) return quoteMatch[1];
+
+    // Try to match key=value (terminated by comma or end of string)
+    const regex = new RegExp(key + "=([^,]+)");
+    const match = details.match(regex);
+    if (match) {
+        let val = match[1].trim();
+        // Strip trailing " SOL" if key is amount
+        if (key === "amount" && val.endsWith(" SOL")) {
+            val = val.replace(" SOL", "").trim();
+        }
+        return val;
+    }
+    return null;
+}
+
+async function fetchRecentTransactions() {
+    if (!currentUser || !currentUserAddress) return;
+    try {
+        const res = await fetch(`${BASE_URL}/logs`);
+        if (!res.ok) return;
+        const logs = await res.json();
+
+        const txList = document.getElementById('transactions-list');
+        if (!txList) return;
+
+        // Filter and parse logs of type TRANSFER that involve currentUser
+        const transfers = [];
+        for (const log of logs) {
+            if (log.event === 'TRANSFER') {
+                const details = log.details || "";
+                const senderId = extractVal(details, "sender_id");
+                const senderEmail = extractVal(details, "sender_email");
+                const senderName = extractVal(details, "sender_name");
+                const recipientWalletId = extractVal(details, "recipient_wallet_id");
+                const recipientAddress = extractVal(details, "recipient_address");
+                const recipientName = extractVal(details, "recipient_name");
+                const amountStr = extractVal(details, "amount");
+                const message = extractVal(details, "message") || "";
+
+                if (senderEmail && recipientAddress && amountStr) {
+                    const parsed = {
+                        senderId,
+                        senderEmail,
+                        senderName,
+                        recipientWalletId,
+                        recipientAddress,
+                        recipientName,
+                        amount: parseFloat(amountStr),
+                        message,
+                        time: log.time
+                    };
+
+                    const isSender = (parsed.senderEmail === currentUser.username);
+                    const isRecipient = (parsed.recipientAddress === currentUserAddress);
+
+                    if (isSender || isRecipient) {
+                        transfers.push({
+                            ...parsed,
+                            isSender,
+                            isRecipient
+                        });
+                    }
+                }
+            }
+        }
+
+        if (transfers.length === 0) {
+            txList.innerHTML = `
+                <div class="p-8 text-center text-slate-400 flex flex-col items-center justify-center h-64" id="tx-placeholder">
+                    <div class="bg-slate-50 p-4 rounded-full mb-4">
+                        <i data-lucide="history" class="w-8 h-8 text-slate-300"></i>
+                    </div>
+                    <p class="font-medium text-slate-500">Các giao dịch của bạn sẽ hiển thị tại đây.</p>
+                    <p class="text-sm mt-2">Dữ liệu on-chain đang được đồng bộ...</p>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            return;
+        }
+
+        let html = "";
+        for (const tx of transfers) {
+            const formattedTime = new Date(tx.time).toLocaleString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+
+            const isSend = tx.isSender;
+            const amountText = (isSend ? "-" : "+") + tx.amount.toFixed(4) + " SOL";
+            const amountClass = isSend ? "text-rose-600 font-extrabold" : "text-emerald-600 font-extrabold";
+
+            const iconName = isSend ? "arrow-up-right" : "arrow-down-left";
+            const iconBg = isSend ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600";
+
+            const labelTitle = isSend ? "Chuyển tiền đi" : "Nhận tiền đến";
+
+            let partnerInfo = "";
+            if (isSend) {
+                if (tx.recipientName) {
+                    partnerInfo = `Đến: <span class="font-bold text-slate-700">${tx.recipientName}</span>`;
+                } else {
+                    const fallbackText = tx.recipientAddress ? tx.recipientAddress.slice(0, 8) + '...' + tx.recipientAddress.slice(-6) : 'N/A';
+                    partnerInfo = `Đến: <span class="font-bold text-slate-700" data-lookup-address="${tx.recipientAddress}">${fallbackText}</span>`;
+                }
+            } else {
+                if (tx.senderName) {
+                    partnerInfo = `Từ: <span class="font-bold text-slate-700">${tx.senderName}</span>`;
+                } else {
+                    partnerInfo = `Từ: <span class="font-bold text-slate-700" data-lookup-email="${tx.senderEmail}">${tx.senderEmail}</span>`;
+                }
+            }
+
+            const messageHtml = tx.message
+                ? `<p class="text-xs text-slate-400 mt-1 italic font-medium bg-slate-50 px-2.5 py-1 rounded-md inline-block border border-slate-100">"${tx.message}"</p>`
+                : "";
+
+            html += `
+                <div class="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-b-0">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${iconBg}">
+                            <i data-lucide="${iconName}" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-800 text-sm md:text-base">${labelTitle}</p>
+                            <p class="text-xs text-slate-500 font-semibold">${partnerInfo} • ${formattedTime}</p>
+                            ${messageHtml}
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <p class="${amountClass} text-sm md:text-base">${amountText}</p>
+                        <p class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block font-bold border border-emerald-100 mt-1 uppercase">Thành công</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        txList.innerHTML = html;
+
+        // Resolve names asynchronously for placeholder elements
+        const elementsToResolve = txList.querySelectorAll('[data-lookup-address], [data-lookup-email]');
+        const uniqueLookups = new Set();
+        elementsToResolve.forEach(el => {
+            const address = el.getAttribute('data-lookup-address');
+            if (address) uniqueLookups.add(`address:${address}`);
+            const email = el.getAttribute('data-lookup-email');
+            if (email) uniqueLookups.add(`email:${email}`);
+        });
+
+        for (const item of uniqueLookups) {
+            const [type, value] = item.split(':');
+            resolveName(type, value).then(resolvedName => {
+                const selector = type === 'address' 
+                    ? `[data-lookup-address="${value}"]`
+                    : `[data-lookup-email="${value}"]`;
+                txList.querySelectorAll(selector).forEach(el => {
+                    el.textContent = resolvedName;
+                });
+            });
+        }
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    } catch (e) {
+        console.error("Error fetching transactions:", e);
     }
 }
