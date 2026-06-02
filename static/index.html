@@ -29,12 +29,17 @@
             <input type="password" id="reg-password" placeholder="Master Password">
             <button onclick="register()" class="btn-wide">Register & Stretch Key</button>
             
-            <div id="reg-status" class="status-box hidden">
-                <p><strong>MFA Enrollment:</strong> Scan with Authenticator</p>
-                <div id="qrcode"></div>
-                <p>Secret: <code id="manual-secret"></code></p>
+            <div id="reg-status" class="status-box hidden" style="text-align: center;">
+                <p style="margin-bottom: 15px;"><strong>Scan with Google Authenticator:</strong></p>
+                
+                <!-- This white wrapper is CRITICAL for camera recognition -->
+                <div style="background: white; padding: 20px; display: inline-block; border-radius: 8px;">
+                    <div id="qrcode"></div>
+                </div>
+
+                <p style="margin-top: 15px;">Manual Secret: <code id="manual-secret" style="color: #3b82f6; font-size: 1.2rem;"></code></p>
                 <button onclick="generateTestToken()" class="btn-outline">Generate Test Token</button>
-                <p>Current Code: <b id="test-token-display">-</b></p>
+                <p>Code: <b id="test-token-display" style="color:#4ade80; font-size: 1.5rem;">-</b></p>
             </div>
         </div>
 

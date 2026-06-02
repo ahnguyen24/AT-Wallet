@@ -45,16 +45,35 @@ async function register() {
     const { status, data } = await api('/register', 'POST', { email, password });
 
     if (status === 201) {
-        session.totpSecret = data.totp_secret.toUpperCase().replace(/=+$/, "");
-        document.getElementById('reg-status').classList.remove('hidden');
-        document.getElementById('manual-secret').innerText = session.totpSecret;
+        // 1. CLEAN SECRET: Remove padding and force uppercase
+        const cleanSecret = data.totp_secret.toUpperCase().replace(/=+$/, "");
+        session.totpSecret = cleanSecret; 
 
-        // QR Code Gen
-        const otpUrl = `otpauth://totp/IOTA-Vault:${encodeURIComponent(email)}?secret=${session.totpSecret}&issuer=IOTA-Vault`;
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: otpUrl, width: 150, height: 150 });
+        document.getElementById('reg-status').classList.remove('hidden');
+        document.getElementById('manual-secret').innerText = cleanSecret;
+
+        // 2. SIMPLEST OTP URI: This is the most compatible format for Google Auth
+        const issuer = "IOTA";
+        const account = email.split('@')[0]; // Simple account name
+        const otpUrl = `otpauth://totp/${issuer}:${account}?secret=${cleanSecret}&issuer=${issuer}`;
+        
+        console.log("QR URI:", otpUrl);
+
+        // 3. RENDER QR: Low error correction makes dots larger and easier to scan
+        const qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = ""; // Clear old one
+        
+        new QRCode(qrContainer, {
+            text: otpUrl,
+            width: 200,
+            height: 200,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.L // Large dots for easier scanning
+        });
+
     } else {
-        alert("Registration Failed: " + data.error);
+        alert("Registration Error");
     }
 }
 
