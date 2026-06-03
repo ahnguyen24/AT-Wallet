@@ -1741,6 +1741,7 @@ dependencies = [
  "hmac",
  "iota-sdk",
  "jsonwebtoken",
+ "once_cell",
  "pbkdf2",
  "rand",
  "serde",

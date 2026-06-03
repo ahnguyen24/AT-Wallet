@@ -1,0 +1,139 @@
+1. SYSTEM ARCHITECTURE & TECH STACK
+--------------------------------------------------------------------------------
+AT-Wallet is designed on a "Stateless Security Model" where the server acts as
+a high-integrity gateway but never stores plaintext private keys or passwords.
+
+A. Backend Stack:
+   - Rust: Selected for compile-time memory safety, lack of a garbage collector,
+     and immunity to buffer overflows (the source of most financial software CVEs).
+   - Axum: An asynchronous web framework built on the Tokio runtime, providing
+     near-zero overhead and extreme concurrency performance.
+   - SQLx: A compile-time verified SQL toolkit. It prevents SQL Injection by
+     forcing parameterized queries (prepared statements) at compile-time.
+   - SQLite: Used as a local, serverless database. It is highly secure because
+     it does not expose any network port, eliminating external connection attacks.
+
+B. Frontend Stack:
+   - Vanilla HTML5 / CSS3 / JavaScript (ES6): The engineering decision to avoid
+     heavy frameworks (like React or Vue) was made to minimize the "Supply-Chain
+     Attack Surface." By eliminating thousands of third-party npm packages, 
+     the wallet is virtually immune to malicious dependency injections.
+
+2. DECENTRALIZED BLOCKCHAIN MECHANICS
+--------------------------------------------------------------------------------
+AT-Wallet integrates the official Rust-based IOTA SDK (Stardust/Shimmer Edition)
+to handle decentralized identities, key derivation, and ledger interactions.
+
+A. BIP-39 Mnemonic Generation:
+   The system generates a cryptographically secure 24-word seed phrase using
+   entropy derived directly from the operating system's kernel (/dev/urandom).
+
+B. BIP-44 Hierarchical Deterministic (HD) Derivation:
+   A single 24-word seed is used to generate multiple isolated blockchain wallets. 
+   The derivation path for Shimmer is defined as:
+   m / purpose' / coin_type' / account' / change / address_index
+   
+   AT-Wallet derives 3 independent accounts from the same mnemonic:
+   - Wallet 0 (Primary):   m / 44' / 4218' / 0' / 0 / 0
+   - Wallet 1 (Savings):   m / 44' / 4218' / 0' / 0 / 1
+   - Wallet 2 (Business):  m / 44' / 4218' / 0' / 0 / 2
+
+   Because we use HD derivation, backing up the single 24-word phrase protects
+   all three wallets simultaneously.
+
+C. 12-Digit Decentralized Routing Protocol:
+   To bridge the gap between complex blockchain addresses (like rms1qpt...) and
+   traditional mobile payment UX, we implement a decentralized routing system:
+   [Phone Number (10 digits)] + [Wallet Index (2 digits)] -> e.g., 091234567801
+
+   When a user sends money, the backend parses this 12-digit code:
+   1. It extracts the first 10 digits as the target phone number.
+   2. It extracts the last 2 digits as the target BIP-44 Wallet Index (01 -> Index 0).
+   3. It queries the local database (which acts as a local cache of an on-chain
+      directory) to resolve the recipient's Full Name and public Shimmer address.
+   4. The transfer is still executed and signed directly on-chain.
+
+3. CRYPTOGRAPHIC VAULT & SECURITY CORE
+--------------------------------------------------------------------------------
+A. PBKDF2 Key Stretching:
+   To protect user passwords against offline brute-force attacks (dictionary
+   attacks), the backend stretches the login password using:
+   - Algorithm: PBKDF2-HMAC-SHA512
+   - Iterations: 600,000
+   - Salt: 16-byte cryptographically secure random salt (unique per user)
+   
+   This stretching takes ~500ms of CPU work per login attempt. If a hacker steals
+   the database, they cannot use GPU/ASIC acceleration to guess passwords because
+   the computational workload is too high.
+
+B. AES-256-GCM Vaulting:
+   The 24-word mnemonic is encrypted using AES-256-GCM. 
+   - Key: The 256-bit key derived via PBKDF2 from the user's password.
+   - Nonce: A unique, random 12-byte initialization vector (IV) per save.
+   - Tag: A 16-byte Authentication Tag appended to the ciphertext.
+   
+   During decryption, AES-GCM automatically verifies the Auth Tag. If even a 
+   single bit of the encrypted database is modified, the decryption fails. This
+   guarantees absolute **Data Integrity**.
+
+C. Argon2id Password & PIN Hashing:
+   We use Argon2id (the winner of the Password Hashing Competition) to hash:
+   - The Login Password (used for secondary validation).
+   - The 6-Digit Transaction PIN (used to authorize transfers).
+   
+   Argon2id is "memory-hard," meaning it requires 64MB of RAM to compute. This
+   completely neutralizes ASIC-based cracking chips.
+
+D. Memory Hardening (Zeroization):
+   In standard languages, deleted strings remain in RAM until a Garbage Collector
+   clears them, leaving them vulnerable to "RAM scraping" malware. 
+   In AT-Wallet, decrypted mnemonics are wrapped in Rust's `zeroize::Zeroizing`
+   struct. The moment the variable goes out of scope, Rust executes assembly
+   instructions to physically overwrite those RAM addresses with zeros (0x00).
+
+E. OnceCell Startup Lock:
+   We use `once_cell::sync::OnceCell` to read the `JWT_SECRET` from the `.env` 
+   file exactly once during main() startup. It is stored in read-only memory,
+   making it impossible for other processes or threads to manipulate or corrupt
+   the secret during runtime.
+
+4. NETWORK SECURITY & ANTI-ATTACK MECHANISMS
+--------------------------------------------------------------------------------
+A. Secure Envelope (Transaction Integrity):
+   Every transfer request is packaged on the frontend as a "Secure Envelope":
+   - Payload: JSON string of (sender_id, recipient_phone, amount, pin, message)
+   - Nonce: A unique, random UUIDv4.
+   - Timestamp: Unix timestamp.
+   - Signature: SHA-256 hash of (payload + nonce + timestamp + password).
+
+   The backend verifies this envelope using a multi-filtering layer:
+   1. Freshness Check: The timestamp must be within +/- 30 seconds of the 
+      server's time. This prevents time-delayed replay attacks.
+   2. Nonce Check (Anti-Replay): The nonce is checked against a database table
+      of `used_nonces`. If already present, the transaction is rejected with
+      409 Conflict.
+   3. Signature Check (Anti-Forgery): The backend reconstructs the SHA-256 hash
+      using the password provided in the request. If they do not match, the
+      request is rejected as tampered.
+
+B. Fail-Secure Account Lockout:
+   The database tracks failed login attempts. If a user fails to authenticate 5
+   times in a row, the `is_locked` bit is flipped to `true`. 
+   Subsequent attempts immediately return `403 Forbidden` without running the CPU-
+   intensive PBKDF2 function. This protects the server from Denial-of-Service
+   (DoS) exhaustion attacks.
+
+C. IP-Based Rate Limiting:
+   The Axum middleware tracks the connection IP (`SocketAddr`) in an async-safe
+   `HashMap`. It limits clients to **5 authentication requests per minute**.
+
+5. STATELESS SESSION MANAGEMENT (JWT)
+--------------------------------------------------------------------------------
+Rather than keeping state in a database or cookies, AT-Wallet uses **JSON Web
+Tokens (JWT)** with the HS256 algorithm.
+- Upon successful login, the server issues a JWT signed with the `JWT_SECRET`.
+- The frontend stores this token in standard Javascript RAM (`session.token`).
+- All protected API routes (Balance Sync, Transfer, Security Logs) require this
+  token in the `Authorization: Bearer <token>` header.
+- The token expires automatically after 15 minutes, protecting the user if they
+  leave their browser open.
