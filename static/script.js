@@ -14,6 +14,13 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.classList.add('hidden'), 4000);
 }
 
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // --- BIỂU ĐỒ TRUST SCORE ---
 async function updateTrustChart() {
     console.log("Hiển thị biểu đồ Trust Score...");
@@ -95,9 +102,15 @@ async function handleAuth(type) {
     console.log(`Đang thực hiện ${type}...`);
 
     try {
+        const hashedPassword = await sha256(password + ":" + username.toLowerCase());
+        let hashedPin = '';
+        if (type === 'register') {
+            hashedPin = await sha256(pin + ":" + username.toLowerCase());
+        }
+
         const body = type === 'login'
-            ? { email: username, password }
-            : { email: username, password, full_name, phone, cccd, pin };
+            ? { email: username, password: hashedPassword }
+            : { email: username, password: hashedPassword, full_name, phone, cccd, pin: hashedPin };
 
         const res = await fetch(`${BASE_URL}${endpoint}`, {
             method: "POST",
@@ -117,7 +130,7 @@ async function handleAuth(type) {
                 }
                 showToast("Đăng ký thành công! Vui lòng lưu mã TOTP.");
             } else {
-                currentUser = { username, user_id: data.user_id, password };
+                currentUser = { username, user_id: data.user_id, password: hashedPassword };
                 showToast("Đăng nhập thành công!");
                 postLoginSetup();
             }
@@ -406,6 +419,7 @@ async function handleTransfer() {
     if (pin.length !== 6 || !/^\d+$/.test(pin)) return showToast("Mã PIN giao dịch phải gồm đúng 6 chữ số", "error");
 
     try {
+        const hashedPin = await sha256(pin + ":" + currentUser.username.toLowerCase());
         const res = await fetch(`${BASE_URL}/wallet/transfer`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -413,7 +427,7 @@ async function handleTransfer() {
                 sender_id: currentUser.user_id,
                 recipient: pendingTransferData.phone,
                 amount: parseFloat(pendingTransferData.amount),
-                pin: pin,
+                pin: hashedPin,
                 message: pendingTransferData.message || null
             }),
         });
@@ -711,7 +725,7 @@ async function resolveName(type, value) {
     } catch (e) {
         console.error("Error resolving name:", e);
     }
-    const fallbackVal = type === 'address' 
+    const fallbackVal = type === 'address'
         ? (value ? value.slice(0, 8) + '...' + value.slice(-6) : 'N/A')
         : value;
     userNamesCache[cacheKey] = fallbackVal;
@@ -878,7 +892,7 @@ async function fetchRecentTransactions() {
         for (const item of uniqueLookups) {
             const [type, value] = item.split(':');
             resolveName(type, value).then(resolvedName => {
-                const selector = type === 'address' 
+                const selector = type === 'address'
                     ? `[data-lookup-address="${value}"]`
                     : `[data-lookup-email="${value}"]`;
                 txList.querySelectorAll(selector).forEach(el => {

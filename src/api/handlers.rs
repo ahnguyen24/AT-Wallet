@@ -126,6 +126,7 @@ pub async fn login_user(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
+    println!("🔒 [DEBUG LOG] Nhận mật khẩu đăng nhập từ Client: {}", payload.password);
     let user: Option<User> = sqlx::query_as("SELECT * FROM users WHERE email = ?").bind(&payload.email).fetch_optional(&state.db).await.ok().flatten();
     let dummy_salt = vec![0u8; 16];
     match user {
@@ -206,6 +207,7 @@ pub async fn simple_transfer(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<TransferRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
+    println!("🔑 [DEBUG LOG] Nhận mã PIN giao dịch từ Client: {}", payload.pin);
     // 1. Lấy thông tin người gửi để kiểm tra PIN
     let sender: User = sqlx::query_as("SELECT * FROM users WHERE id = ?").bind(&payload.sender_id).fetch_one(&state.db).await
         .map_err(|_| (StatusCode::NOT_FOUND, Json(json!({"error": "Không tìm thấy người gửi"}))))?;
@@ -284,6 +286,7 @@ pub async fn simple_transfer(
         "Transfer: sender_id={}, sender_email={}, sender_name={}, recipient_wallet_id={}, recipient_address={}, recipient_name={}, amount={} SOL, message='{}'",
         sender.id, sender.email, sender.full_name, recipient_wallet.id, recipient_wallet.address, recipient_user.full_name, payload.amount, msg
     );
+    println!("🛡️ SECURITY LOG WRITTEN: {}", details);
     record_security_log(&state.db, "TRANSFER", "INFO", &details).await;
 
     Ok((StatusCode::OK, Json(json!({
